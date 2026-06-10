@@ -1,6 +1,7 @@
 # Packing artifacts - the .pem private key must never be committed
 *.pem
 *.crx
+dist/
 
 # Local Claude notes
 CLAUDE.local.md
