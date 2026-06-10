@@ -1,0 +1,651 @@
+# YouTube Kids Manager - Gaming Channels List
+# =============================================
+# Known gaming YouTube channel names/handles.
+# One channel per line. Case-insensitive matching.
+# Total channels: 619
+# =============================================
+
+100 thieves
+1980sgamer1
+3seaedits
+4flaggamer
+4mbayo
+8bitryan
+a4
+abezy
+acookiegod
+afguideshd
+agamingbeaver
+aid
+ajibarragaming
+akanemsko
+akaunoriginal
+alan becker
+alanzoka
+albertsstuff
+alex
+alexby11
+ali-a
+alia
+am3nic
+angry joe
+antrax
+antronixx g
+aphmau
+aqua
+arab games network
+ashshortsog
+asmongold
+asmongoldclips
+asmontv
+asp_fc
+astralspiff
+attach
+authenticgames
+auziomf
+avocadoplayz
+awe me
+awemechannel
+ayylmaotv
+azhymovs
+azzyland
+baablu
+badboyhalo
+bambaeyoh
+bananad.
+barelyfriendsbtw
+barker
+baxtrix
+bcc trolling
+bdoubleo100
+bdplus1
+bdzminecraft
+beamng-fun
+beanyfoxgaming
+benjyfishy
+berleezy
+bestcodcomedy
+beth0524
+beybladegeeks
+bijuu mike
+black plasma studios
+blargmyshnoople
+bobby plays
+bobeast
+bomerbazi
+boomgonza
+boomsniper
+bradgamezz
+brandon302
+brandonsmithesports
+brianna
+brksed
+bucketjosh
+bugha
+buzzfeedmultiplayer
+caedrel
+caedrelclips
+caitliniola
+captain sparklez
+captainnox
+captainsparklez
+carryminati
+catstar
+caylus
+cdotkom
+ceeday
+cellium
+celynhaf
+censor
+cevlo
+chessbrah
+chicalive
+chizeled
+chuffsters
+clashwithshane
+clayster
+cleanprincegaming
+cleansey
+clix
+cloud9
+coisa de nerd
+complexity
+confidentgames
+cookieswirlc
+corl
+coryxkenshin
+craftbattleduty
+crainer
+crave_
+crimsix
+cris devil gamer
+cubfan135
+danandphil
+danbull
+dangerouslyfunny
+danirep
+dannyaarons
+dantdm
+dashie
+dashiegames
+dashpum4
+dashy
+daz games
+dazgames
+deadliftsforthedarkgods
+denis
+deoxysprime
+diedevdie
+dilishow
+disguised toast
+djmariio
+djmario
+dnzioshorts
+docm77
+donibobes
+doom49
+drdirespect
+drdonut-reacts
+dream
+dreamwastaken
+drift0r
+dudu moura
+dunkey
+eddievr
+eeoneguy
+eidermc
+elescocesgamer
+elrubius
+elrubiusomg
+elskyodin
+eltrollino
+emswizzle
+enes batur
+envy-videostreams3681
+epicfortnite
+ericvanwilderman
+esqpur
+etho
+evil geniuses
+exysia
+faker
+fakeuni
+falsesymmetry
+fanumlive
+faze
+faze apex
+faze clan
+faze jarvis
+faze jev
+faze rug
+faze sway
+fernanfloo
+fextralife
+fgteev
+fireb0rn
+fischstick
+flamingo
+floatyzone
+fnatic
+forgottenalamo
+formal
+fortnite
+freddiew
+fresh
+fridge_official
+frost
+frost diamond
+fudgyyyy
+fullsquadgaming
+fumezgaming
+futcrunch
+futureneverlands
+g2 esports
+gameplayrj
+gameranx
+games eduuu
+gamespot
+gamingwithkev
+geluby777
+geminitay
+gen.g
+georgenotfound
+ggleadermax
+girafik2679
+givara_alali
+gloom
+godzly
+goldactual
+goldladymaria2024
+goodtimeswithscar
+gothamchess
+grian
+gsvines333
+guava juice
+h20 delirious
+h2odelirious
+hardwarenf
+hasanabi
+haviancritdmg
+hawksnest
+haxifygmod
+hecticsg
+heraageofempires2
+hewmoran
+highkeyhateme
+hindustangamerloggy
+hueva
+huigolden
+i am wildcat
+iambatsdaily
+iamwildcat
+iballisticsquid
+ibekeigh
+iferg
+ign
+ihascupquake
+illey
+imevakz
+impulsesv
+infinitebits
+inquisitormaster
+ishowspeed
+isimplyxisabella
+iskall85
+itowngameplay
+itsfunneh
+itslachyz
+itszedar
+jackfrags
+jackrobloxvn
+jacksepticeye
+jare_valorant
+jarvysub
+jayingee
+jazzghost
+jelly
+jellyyt
+jess no limit
+joshdub
+joshyshorts
+jp plays
+juangabriel4391
+judosloth
+juegagerman
+juicyfruitsnacks
+julia minegirl
+karl jacobs
+karl jobst
+karma
+kashykans
+kavenadventures
+keralis
+kevduit
+kjragaming
+knownasdeva
+kohlpowered
+koopekool
+kotaku
+kreativekyle
+kreekcraft
+ksi
+ksiolajidebthd
+kubedlive
+kubz scouts
+kuplinov play
+kuplinovplay
+kwebbelkop
+kyrsp33dy
+lachlan
+laiwy
+lankybox
+lanllovetv
+laylaroblox
+lazarbeam
+ldshadowlady
+league of legends
+leagueoflegends
+leah ashe
+legendsofavantris
+lemonybello
+lenalemon
+letda hyper
+lewisblogsgaming
+lilypichu
+lindsayberc
+linhnhishorts
+lipaogamer
+lirik
+lisfoxgaming
+lispyjimmy
+littlestsnail
+lonnieblox
+loserfruit
+loudflavor
+luckmanwashere
+luckymaker
+ludwig
+lukedavidsongaming
+lumpytouch
+luzugames
+maciejmp
+mackenzieturnerroblox
+macmacs
+mafiafrogg
+maizenofficial
+makiman131
+mamounitor
+mandjtv
+manucraft
+manxninjapig
+mariieett010
+markiplier
+markipliergame
+marmok
+mashed
+matroix
+matthepatrick13
+mccreamy
+mdeezy1
+meenyu
+miawaug
+midmysticx
+mikecrack
+mikeltube
+mikeypiffyt
+miniminter
+mitr0
+mizkif
+mizurl
+mochi.ch1
+mohanadpc
+moistcr1tikal
+mongraal
+morealia
+morgz
+mortal
+mortalyt
+mrbeast
+mrbeast6000
+mrbeastgaming
+mrfreshasian
+mrmuselk
+mrsavage
+mrstiven tc
+msmpokegamer
+mully
+mumbo jumbo
+mumbojumbo
+mummybear
+munitionss
+muselk
+myreum
+mysingingmonsters
+mysticumbreon
+myth
+mythpat
+myusernamesthis
+nadeshot
+nathie
+neurosama
+nickeh30
+nickeh30shorts
+nickmercs
+nimboot
+ninja
+ninjashyper
+nizaritoo
+nmplol
+nobru
+notvixios
+noughtpointfourlive
+nrg esports
+nutty_shorts
+officialcheckpoint
+oofro
+optic
+optic gaming
+orangejuice
+orenshort
+outmc
+panda
+pandeh
+parkenharbor
+payowow
+pazjor
+pdk films
+pdkfilms
+pearlescentmoon
+penguinz0
+petsswag
+pewdiepie
+philza
+piuzinho
+playhard
+playstation
+pm7
+pmdamian
+poketips
+pokimane
+polygon
+popularmmos
+potemer
+poweronvr
+pozzi
+pr3sidnt
+prestonplayz
+primecreations1
+pubgmobile
+purplecliffe
+quackity
+quinnjamin
+racergod
+raghib
+ranboo
+rarran
+realcivilengineergaming
+realharuki2.o
+realmorecrunch
+redbluepov
+reisshub
+remainings
+rendog
+rendy rangers
+rescue_bot
+retroauraa
+rezendeevil
+rigiddecay
+riotgamesinc
+robin hood gamer
+robinhoodgamer1
+robleisiutu
+rocketjump
+russoplays
+russvandy
+ryno73
+rzn
+s2g
+saeed_book
+sapnap
+savage
+scrollkings
+scump
+sentinels
+seriously_dude
+sernando
+sharkboysam
+sharkyshark
+shirrako
+shortcat321
+shotzzy
+shroud
+simp
+simply
+simplytashaofficial
+sinavidofficial
+sinleytergame
+skeppy
+sketch
+skill up
+skydoesminecraft
+skyexclusive
+sleenty
+slogo
+slogoman
+smallant
+smii7y
+smii7yplus
+snapiyyyt
+snipereliteofficial
+sniperxplug
+socksapollo
+sodapoppin
+someordinarygamers
+speedyw03
+speirstheamazinghd
+spider-manfriends
+spycakes
+squeezie
+sssniperwolf
+ssundee
+stadiumliveapp
+stampylonghead
+stampylongnose
+steak
+stressmonster
+stylesx2
+sub
+summit1g
+summoning salt
+suphutv102
+sway
+sykkuno
+symfuhny
+sypherpk
+syznsx
+t1 esports
+taliamarplus
+talkingtommovie
+tamitamako
+tango tek
+tarik
+tayson
+tazercraft
+team liquid
+technoblade
+tenz
+teteboyi
+tfue
+thatmumbojumbo
+the game theorists
+theactman
+thebraindit
+thediamondminecart
+thedonato
+thegrefg
+themattshea
+theradbrad
+theslickdaddyclub
+thespiffingbrit
+thesyndicateproject
+thewillyrex
+thinknoodles
+thrillseeker
+thrxve
+timthetatman
+tmartn
+tobygames
+tofuu
+tommyinnit
+total gaming
+trendblitzdaily
+tridentramc
+tsm
+tubbo
+turbotwisttt
+turner tfue
+twd_thomass
+twincoconuts
+twishorts
+two side gamers
+tycer
+tyler1
+tylerandsnowi
+typical gamer
+typicalgamer
+tyrecordslol
+uhsublime
+uniecto
+unspeakable
+unspeakablegaming
+unstablesparkey
+upper echelon
+uwucutesingle
+vadikirimma
+valkyrae
+vanossgaming
+vegetta777
+videogamedunkey
+vidsquared_yt
+viecti
+vikkstar123
+vyacheslavoo
+w2s
+wallibear
+westjett
+whatintheworldofficial
+wiederdude
+wilbur soot
+willyrex
+wishingtikal
+wisp
+wroetoshaw
+wyfulshorts
+xiaoyi-and-dad
+xifanpubgm
+xisuma
+xqc
+xtrrock
+xxpurrari
+yahboispeedz
+yassuo
+yayo
+yeetsmash
+yej
+yogscast
+yogscast lewis
+yongyea
+your narrator
+yrrah908
+zachstechturf
+zbing z
+zedaph
+zelta.
+zillamk6643
+zingledude
+zombiecleo
+AverageRBLX
+BachaBlox
+Bread
+Chimuela Games
+Cussly Gaming
+EJ Gaming
+emeral gaming
+FNAF World Universe
+GrayjayCriticals
+HGaming
+HooliHovv gaming
+Katetoyo
+LankyBox
+McNasty
+MrBeast
+Mufty Gaming
+Naeem Squad
+OMB Gaming
+OneHandedGamer
+OneManHD Gaming
+patrickdoriangames
+Qukeblox
+RUXBLE
+Art of Crime
+Azrilich

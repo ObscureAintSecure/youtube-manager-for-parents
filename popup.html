@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Kids Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎮 YouTube Kids Manager</h1>
+      <p class="subtitle">Manage your child's YouTube experience</p>
+    </header>
+
+    <!-- Mode Selection -->
+    <section class="section">
+      <div class="mode-tabs">
+        <button id="tab-subscriptions" class="tab-btn active">📋 Subscriptions</button>
+        <button id="tab-recommendations" class="tab-btn">🚫 Recommendations</button>
+      </div>
+    </section>
+
+    <!-- Status/Instructions -->
+    <div id="status-area" class="status-area">
+      <p id="status-message">Select a mode above to get started</p>
+    </div>
+
+    <!-- ========== SUBSCRIPTIONS MODE ========== -->
+    <div id="subscriptions-mode">
+      <!-- Step 1: Load -->
+      <section class="section">
+        <button id="btn-load" class="btn btn-primary btn-large">
+          📋 Load Subscriptions
+        </button>
+        <p class="help-text">Go to youtube.com/feed/channels first</p>
+      </section>
+
+      <!-- Filters (hidden until loaded) -->
+      <section id="filter-section" class="section hidden">
+        <h2>Filter Channels</h2>
+        
+        <div class="filter-row">
+          <input type="text" id="search-input" placeholder="Search by name..." class="search-input">
+          <button id="btn-search" class="btn btn-small">🔍</button>
+        </div>
+
+        <div class="filter-buttons">
+          <button id="btn-detect-gaming" class="btn btn-warning">
+            📋 Select Listed
+          </button>
+          <button id="btn-select-all" class="btn btn-secondary">All</button>
+          <button id="btn-select-none" class="btn btn-secondary">None</button>
+        </div>
+
+        <div class="stats-row">
+          <span id="total-count">0 channels</span>
+          <span id="selected-count">0 selected</span>
+          <span id="gaming-count" class="gaming-badge hidden">0 on lists</span>
+        </div>
+      </section>
+
+      <!-- Channel List (hidden until loaded) -->
+      <section id="channels-section" class="section hidden">
+        <h2>Subscribed Channels</h2>
+        <div id="channel-list" class="channel-list">
+          <!-- Channels will be populated here -->
+        </div>
+      </section>
+
+      <!-- Action Buttons (hidden until loaded) -->
+      <section id="action-section" class="section hidden">
+        <button id="btn-unsubscribe" class="btn btn-danger btn-large" disabled>
+          🗑️ Unsubscribe Selected (0)
+        </button>
+        <p class="warning-text">⚠️ This cannot be undone!</p>
+      </section>
+    </div>
+
+    <!-- ========== RECOMMENDATIONS MODE ========== -->
+    <div id="recommendations-mode" class="hidden">
+      <section class="section">
+        <p class="mode-description">
+          Scan the homepage to see all channels. Channels on your block lists (gaming + misc) are pre-selected.
+          Select any additional channels you want to block from recommendations.
+        </p>
+        <button id="btn-scan-home" class="btn btn-primary btn-large">
+          🔍 Scan Homepage
+        </button>
+        <p class="help-text">Go to youtube.com homepage first</p>
+      </section>
+
+      <!-- Found videos section -->
+      <section id="found-videos-section" class="section hidden">
+        <h2>Channels on Homepage</h2>
+        <div class="filter-buttons">
+          <button id="btn-select-gaming-videos" class="btn btn-warning">📋 Listed Only</button>
+          <button id="btn-select-all-videos" class="btn btn-secondary">All</button>
+          <button id="btn-select-none-videos" class="btn btn-secondary">None</button>
+        </div>
+        <div class="stats-row">
+          <span id="videos-found-count">0 channels</span>
+          <span id="videos-selected-count">0 selected</span>
+          <span id="videos-gaming-count" class="gaming-badge hidden">0 on lists</span>
+        </div>
+        <div id="video-list" class="channel-list">
+          <!-- Videos will be populated here -->
+        </div>
+      </section>
+
+      <!-- Block action -->
+      <section id="block-action-section" class="section hidden">
+        <button id="btn-block-selected" class="btn btn-warning btn-large" disabled>
+          🚫 Don't Recommend Channels (0)
+        </button>
+        <p class="help-text">
+          Tells YouTube "Don't recommend channel" for each.<br>
+          To undo: Go to myactivity.google.com → Other activity → YouTube "Not interested" feedback → Delete
+        </p>
+      </section>
+    </div>
+
+    <!-- ========== SHARED: Progress ========== -->
+    <section id="progress-section" class="section hidden">
+      <h2>Progress</h2>
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <p id="progress-text">0 / 0</p>
+      <button id="btn-stop" class="btn btn-secondary">⏹️ Stop</button>
+    </section>
+
+    <!-- ========== SHARED: Results ========== -->
+    <section id="results-section" class="section hidden">
+      <h2>Results</h2>
+      <div id="results-content" class="results-content"></div>
+      <button id="btn-done" class="btn btn-primary">Done</button>
+    </section>
+
+    <footer>
+      <p>v1.5.0</p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
