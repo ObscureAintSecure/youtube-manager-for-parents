@@ -54,6 +54,14 @@
           <button id="btn-select-none" class="btn btn-secondary">None</button>
         </div>
 
+        <div class="filter-row">
+          <input type="number" id="bottom-n-input" class="search-input" min="1" max="999" value="25" title="How many channels from the bottom of the list">
+          <button id="btn-select-bottom" class="btn btn-small">⬇️ Select Bottom N</button>
+        </div>
+        <p class="help-text" style="margin-top: 0;">
+          Sort the YouTube page by "Most relevant" before loading — then the bottom N are the least-watched channels.
+        </p>
+
         <div class="stats-row">
           <span id="total-count">0 channels</span>
           <span id="selected-count">0 selected</span>
@@ -164,7 +172,7 @@
     </section>
 
     <footer>
-      <p>v1.7.0</p>
+      <p>v1.8.0</p>
     </footer>
   </div>
 

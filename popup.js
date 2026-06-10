@@ -50,6 +50,8 @@ function initElements() {
   elements.btnDetectGaming = document.getElementById('btn-detect-gaming');
   elements.btnSelectAll = document.getElementById('btn-select-all');
   elements.btnSelectNone = document.getElementById('btn-select-none');
+  elements.bottomNInput = document.getElementById('bottom-n-input');
+  elements.btnSelectBottom = document.getElementById('btn-select-bottom');
   elements.totalCount = document.getElementById('total-count');
   elements.selectedCount = document.getElementById('selected-count');
   elements.gamingCount = document.getElementById('gaming-count');
@@ -124,6 +126,7 @@ function setupEventListeners() {
   elements.btnDetectGaming.addEventListener('click', detectGamingChannels);
   elements.btnSelectAll.addEventListener('click', selectAllChannels);
   elements.btnSelectNone.addEventListener('click', selectNoneChannels);
+  elements.btnSelectBottom.addEventListener('click', selectBottomN);
   elements.btnUnsubscribe.addEventListener('click', startUnsubscribe);
   
   // Recommendations mode
@@ -523,6 +526,26 @@ function detectGamingChannels() {
   updateChannelCounts();
   const count = channels.filter(ch => ch.isBlocked).length;
   setStatus(`Selected ${count} channels from block lists`, 'info');
+}
+
+// Select the last N channels in loaded order. When the YouTube page is
+// sorted by "Most relevant", the bottom of the list is the least-watched.
+function selectBottomN() {
+  const n = parseInt(elements.bottomNInput.value, 10);
+  if (!n || n < 1 || channels.length === 0) return;
+
+  selectedChannels.clear();
+  channels.slice(-n).forEach(ch => selectedChannels.add(ch.id));
+
+  document.querySelectorAll('#channel-list .channel-checkbox').forEach(cb => {
+    cb.checked = selectedChannels.has(parseInt(cb.dataset.id));
+  });
+
+  // Jump the popup list to the bottom so the selection is visible
+  elements.channelList.scrollTop = elements.channelList.scrollHeight;
+
+  updateChannelCounts();
+  setStatus(`Selected bottom ${Math.min(n, channels.length)} of ${channels.length} channels — review before unsubscribing`, 'info');
 }
 
 function selectAllChannels() {

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Kids Manager",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Help parents manage YouTube subscriptions - bulk unsubscribe from gaming and other unwanted channels",
   "permissions": [
     "activeTab",
