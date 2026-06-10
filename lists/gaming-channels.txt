@@ -2,7 +2,7 @@
 # =============================================
 # Known gaming YouTube channel names/handles.
 # One channel per line. Case-insensitive matching.
-# Total channels: 669
+# Total channels: 672
 # =============================================
 
 100 thieves
@@ -674,3 +674,6 @@ dailystoriesonyt
 officialdanigt
 chillzsubzero
 brxxksblox
+coach corey martin
+pizzatime badges
+jurassic blocky
