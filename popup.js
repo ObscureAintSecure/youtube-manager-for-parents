@@ -10,6 +10,7 @@ let gamingChannelsList = [];
 let miscChannelsList = [];
 let gamingListText = '';
 let miscListText = '';
+let listsFetchedAt = null;
 let isRunning = false;
 let currentMode = 'subscriptions';
 
@@ -32,9 +33,10 @@ function initElements() {
   elements.listMisc = document.getElementById('list-misc');
   elements.gamingListCount = document.getElementById('gaming-list-count');
   elements.miscListCount = document.getElementById('misc-list-count');
-  elements.btnSaveLists = document.getElementById('btn-save-lists');
-  elements.btnSyncLists = document.getElementById('btn-sync-lists');
-  elements.btnRestoreLists = document.getElementById('btn-restore-lists');
+  elements.btnRefreshLists = document.getElementById('btn-refresh-lists');
+  elements.btnEditGaming = document.getElementById('btn-edit-gaming');
+  elements.btnEditMisc = document.getElementById('btn-edit-misc');
+  elements.listsSyncStatus = document.getElementById('lists-sync-status');
   
   // Status
   elements.statusArea = document.getElementById('status-area');
@@ -87,6 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadChannelLists();
   setupEventListeners();
   switchMode('subscriptions');
+  refreshListsFromGitHub(); // pull latest lists in the background
 
   // If a batch is running (or finished while popup was closed), reattach
   const { ykm_progress } = await chrome.storage.local.get('ykm_progress');
@@ -104,11 +107,13 @@ function setupEventListeners() {
   elements.tabLists.addEventListener('click', () => switchMode('lists'));
 
   // Lists mode
-  elements.btnSaveLists.addEventListener('click', saveLists);
-  elements.btnSyncLists.addEventListener('click', syncListsFromGitHub);
-  elements.btnRestoreLists.addEventListener('click', restoreDefaultLists);
-  elements.listGaming.addEventListener('input', updateListCounts);
-  elements.listMisc.addEventListener('input', updateListCounts);
+  elements.btnRefreshLists.addEventListener('click', () => refreshListsFromGitHub(true));
+  elements.btnEditGaming.addEventListener('click', () => {
+    chrome.tabs.create({ url: GITHUB_EDIT_BASE + 'gaming-channels.txt' });
+  });
+  elements.btnEditMisc.addEventListener('click', () => {
+    chrome.tabs.create({ url: GITHUB_EDIT_BASE + 'misc-channels.txt' });
+  });
   
   // Subscriptions mode
   elements.btnLoad.addEventListener('click', loadSubscriptions);
@@ -152,10 +157,8 @@ function switchMode(mode) {
   } else if (mode === 'recommendations') {
     setStatus('Go to youtube.com homepage and click "Scan Homepage"', 'info');
   } else {
-    elements.listGaming.value = gamingListText;
-    elements.listMisc.value = miscListText;
-    updateListCounts();
-    setStatus('Edit your lists, then click Save', 'info');
+    fillListsView();
+    setStatus('Lists are read-only here. Edit on GitHub, then Refresh.', 'info');
   }
 
   // Hide progress/results when switching
@@ -182,43 +185,33 @@ async function fetchBundledList(file) {
   }
 }
 
+// GitHub is the single source of truth for the lists. The extension pulls
+// the latest copies on every popup open; storage holds a cache for when
+// GitHub is unreachable; the bundled .txt files are the last-resort fallback.
+const GITHUB_LISTS_BASE = 'https://raw.githubusercontent.com/ObscureAintSecure/youtube-kids-manager/main/lists/';
+const GITHUB_EDIT_BASE = 'https://github.com/ObscureAintSecure/youtube-kids-manager/edit/main/lists/';
+
 async function loadChannelLists() {
-  // Lists live in chrome.storage so they're editable in the installed
-  // extension. The bundled .txt files only seed storage on first run.
   const { ykm_lists } = await chrome.storage.local.get('ykm_lists');
 
   if (ykm_lists && typeof ykm_lists.gaming === 'string') {
     gamingListText = ykm_lists.gaming;
     miscListText = ykm_lists.misc || '';
+    listsFetchedAt = ykm_lists.fetchedAt || null;
   } else {
     gamingListText = await fetchBundledList('gaming-channels.txt');
     miscListText = await fetchBundledList('misc-channels.txt');
-    await chrome.storage.local.set({ ykm_lists: { gaming: gamingListText, misc: miscListText } });
+    listsFetchedAt = null;
   }
 
   gamingChannelsList = parseList(gamingListText);
   miscChannelsList = parseList(miscListText);
 }
 
-async function saveLists() {
-  gamingListText = elements.listGaming.value;
-  miscListText = elements.listMisc.value;
-  await chrome.storage.local.set({ ykm_lists: { gaming: gamingListText, misc: miscListText } });
+async function refreshListsFromGitHub(manual = false) {
+  elements.btnRefreshLists.disabled = true;
+  if (manual) setStatus('Fetching lists from GitHub...', 'info');
 
-  gamingChannelsList = parseList(gamingListText);
-  miscChannelsList = parseList(miscListText);
-  retagLoadedData();
-  updateListCounts();
-  setStatus(`Saved: ${gamingChannelsList.length} gaming, ${miscChannelsList.length} misc entries`, 'success');
-}
-
-// Pull the canonical lists from the GitHub repo so every profile using the
-// extension can share one source of truth. Lists are data, not code.
-const GITHUB_LISTS_BASE = 'https://raw.githubusercontent.com/ObscureAintSecure/youtube-kids-manager/main/lists/';
-
-async function syncListsFromGitHub() {
-  elements.btnSyncLists.disabled = true;
-  setStatus('Fetching lists from GitHub...', 'info');
   try {
     const [gamingRes, miscRes] = await Promise.all([
       fetch(GITHUB_LISTS_BASE + 'gaming-channels.txt', { cache: 'no-cache' }),
@@ -227,22 +220,41 @@ async function syncListsFromGitHub() {
     if (!gamingRes.ok || !miscRes.ok) {
       throw new Error(`GitHub returned ${gamingRes.ok ? miscRes.status : gamingRes.status}`);
     }
-    elements.listGaming.value = await gamingRes.text();
-    elements.listMisc.value = await miscRes.text();
-    await saveLists();
-    setStatus(`Synced from GitHub: ${gamingChannelsList.length} gaming, ${miscChannelsList.length} misc entries`, 'success');
+
+    gamingListText = await gamingRes.text();
+    miscListText = await miscRes.text();
+    listsFetchedAt = Date.now();
+    await chrome.storage.local.set({
+      ykm_lists: { gaming: gamingListText, misc: miscListText, fetchedAt: listsFetchedAt }
+    });
+
+    gamingChannelsList = parseList(gamingListText);
+    miscChannelsList = parseList(miscListText);
+    retagLoadedData();
+    fillListsView();
+    if (manual) {
+      setStatus(`Synced: ${gamingChannelsList.length} gaming, ${miscChannelsList.length} misc entries`, 'success');
+    }
   } catch (error) {
-    setStatus(`Sync failed: ${error.message}. Lists unchanged.`, 'error');
+    fillListsView(`GitHub unreachable (${error.message})`);
+    if (manual) setStatus(`Sync failed: ${error.message}. Using cached lists.`, 'error');
   } finally {
-    elements.btnSyncLists.disabled = false;
+    elements.btnRefreshLists.disabled = false;
   }
 }
 
-async function restoreDefaultLists() {
-  if (!confirm('Replace both lists with the bundled defaults?\n\nYour edits will be lost.')) return;
-  elements.listGaming.value = await fetchBundledList('gaming-channels.txt');
-  elements.listMisc.value = await fetchBundledList('misc-channels.txt');
-  await saveLists();
+function fillListsView(errorNote) {
+  elements.listGaming.value = gamingListText;
+  elements.listMisc.value = miscListText;
+  updateListCounts();
+  if (errorNote) {
+    const cached = listsFetchedAt ? `cached copy from ${new Date(listsFetchedAt).toLocaleString()}` : 'bundled copy';
+    elements.listsSyncStatus.textContent = `${errorNote} — showing ${cached}`;
+  } else if (listsFetchedAt) {
+    elements.listsSyncStatus.textContent = `Synced from GitHub: ${new Date(listsFetchedAt).toLocaleString()}`;
+  } else {
+    elements.listsSyncStatus.textContent = 'Not synced yet — showing bundled lists';
+  }
 }
 
 function updateListCounts() {

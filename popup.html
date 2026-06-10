@@ -125,25 +125,24 @@
     <div id="lists-mode" class="hidden">
       <section class="section">
         <p class="mode-description">
-          Channels are tagged by exact match against these lists: channel name or @handle
-          (without the @), case-insensitive. One entry per line, lines starting with # are comments.
+          Lists are managed on GitHub. The extension pulls the latest copies every time it opens.
+          Channels are tagged by exact match: channel name or @handle (without the @),
+          case-insensitive. One entry per line, # for comments.
         </p>
+        <p class="help-text" id="lists-sync-status">Not synced yet</p>
 
         <h2>Gaming Channels <span id="gaming-list-count" class="list-count"></span></h2>
-        <textarea id="list-gaming" class="list-editor" rows="10" spellcheck="false"></textarea>
+        <textarea id="list-gaming" class="list-editor" rows="10" spellcheck="false" readonly></textarea>
 
         <h2>Misc Blocked Channels <span id="misc-list-count" class="list-count"></span></h2>
-        <textarea id="list-misc" class="list-editor" rows="6" spellcheck="false"></textarea>
+        <textarea id="list-misc" class="list-editor" rows="6" spellcheck="false" readonly></textarea>
 
-        <button id="btn-save-lists" class="btn btn-primary btn-large">💾 Save Lists</button>
+        <button id="btn-refresh-lists" class="btn btn-primary btn-large">🔄 Refresh from GitHub</button>
         <div class="filter-buttons" style="margin-top: 8px; margin-bottom: 0;">
-          <button id="btn-sync-lists" class="btn btn-secondary">⬇️ Sync from GitHub</button>
-          <button id="btn-restore-lists" class="btn btn-secondary">Restore Bundled Defaults</button>
+          <button id="btn-edit-gaming" class="btn btn-secondary">✏️ Edit Gaming list</button>
+          <button id="btn-edit-misc" class="btn btn-secondary">✏️ Edit Misc list</button>
         </div>
-        <p class="help-text">
-          Saved lists live in this profile's extension storage. Changes apply immediately.<br>
-          Sync pulls the latest lists from the project's GitHub repo and saves them here.
-        </p>
+        <p class="help-text">Edit buttons open the file on GitHub. After committing there, click Refresh.</p>
       </section>
     </div>
 
@@ -165,7 +164,7 @@
     </section>
 
     <footer>
-      <p>v1.6.0</p>
+      <p>v1.7.0</p>
     </footer>
   </div>
 

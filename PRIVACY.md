@@ -18,7 +18,7 @@ This extension does not collect, store remotely, transmit, sell, or share any us
 
 No user data is sent to the developer or to any third party.
 
-The extension makes one kind of outbound request, and only when you click "Sync from GitHub" in the Lists tab: it downloads the latest channel block lists (plain text files) from this project's public GitHub repository. That request sends no personal data; it is an ordinary file download. The extension makes no other network requests; everything else happens in the YouTube page already open in your browser.
+The extension makes one kind of outbound request: when its popup is opened (and when you click Refresh in the Lists tab), it downloads the latest channel block lists (plain text files) from this project's public GitHub repository. That request sends no personal data; it is an ordinary file download. If GitHub is unreachable, a locally cached copy is used. The extension makes no other network requests; everything else happens in the YouTube page already open in your browser.
 
 ## Contact
 
