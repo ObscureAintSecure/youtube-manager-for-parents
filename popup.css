@@ -355,6 +355,31 @@ header h1 {
   margin-left: 4px;
 }
 
+/* List Editor */
+.list-editor {
+  width: 100%;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 12px;
+  resize: vertical;
+}
+
+.list-editor:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.list-count {
+  font-weight: normal;
+  color: #888;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 /* Progress Bar */
 .progress-bar {
   height: 20px;

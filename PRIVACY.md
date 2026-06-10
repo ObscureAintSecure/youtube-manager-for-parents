@@ -16,7 +16,9 @@ This extension does not collect, store remotely, transmit, sell, or share any us
 
 ## Third parties
 
-No data is sent to the developer or to any third party. The extension makes no network requests of its own; it only interacts with the YouTube page already open in your browser.
+No user data is sent to the developer or to any third party.
+
+The extension makes one kind of outbound request, and only when you click "Sync from GitHub" in the Lists tab: it downloads the latest channel block lists (plain text files) from this project's public GitHub repository. That request sends no personal data; it is an ordinary file download. The extension makes no other network requests; everything else happens in the YouTube page already open in your browser.
 
 ## Contact
 

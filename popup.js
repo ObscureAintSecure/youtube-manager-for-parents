@@ -8,6 +8,8 @@ let foundVideos = [];
 let selectedVideos = new Set();
 let gamingChannelsList = [];
 let miscChannelsList = [];
+let gamingListText = '';
+let miscListText = '';
 let isRunning = false;
 let currentMode = 'subscriptions';
 
@@ -20,8 +22,19 @@ function initElements() {
   // Tabs
   elements.tabSubscriptions = document.getElementById('tab-subscriptions');
   elements.tabRecommendations = document.getElementById('tab-recommendations');
+  elements.tabLists = document.getElementById('tab-lists');
   elements.subscriptionsMode = document.getElementById('subscriptions-mode');
   elements.recommendationsMode = document.getElementById('recommendations-mode');
+  elements.listsMode = document.getElementById('lists-mode');
+
+  // Lists mode
+  elements.listGaming = document.getElementById('list-gaming');
+  elements.listMisc = document.getElementById('list-misc');
+  elements.gamingListCount = document.getElementById('gaming-list-count');
+  elements.miscListCount = document.getElementById('misc-list-count');
+  elements.btnSaveLists = document.getElementById('btn-save-lists');
+  elements.btnSyncLists = document.getElementById('btn-sync-lists');
+  elements.btnRestoreLists = document.getElementById('btn-restore-lists');
   
   // Status
   elements.statusArea = document.getElementById('status-area');
@@ -88,6 +101,14 @@ function setupEventListeners() {
   // Tab switching
   elements.tabSubscriptions.addEventListener('click', () => switchMode('subscriptions'));
   elements.tabRecommendations.addEventListener('click', () => switchMode('recommendations'));
+  elements.tabLists.addEventListener('click', () => switchMode('lists'));
+
+  // Lists mode
+  elements.btnSaveLists.addEventListener('click', saveLists);
+  elements.btnSyncLists.addEventListener('click', syncListsFromGitHub);
+  elements.btnRestoreLists.addEventListener('click', restoreDefaultLists);
+  elements.listGaming.addEventListener('input', updateListCounts);
+  elements.listMisc.addEventListener('input', updateListCounts);
   
   // Subscriptions mode
   elements.btnLoad.addEventListener('click', loadSubscriptions);
@@ -114,22 +135,29 @@ function setupEventListeners() {
 
 function switchMode(mode) {
   currentMode = mode;
-  
+
   // Update tabs
   elements.tabSubscriptions.classList.toggle('active', mode === 'subscriptions');
   elements.tabRecommendations.classList.toggle('active', mode === 'recommendations');
-  
+  elements.tabLists.classList.toggle('active', mode === 'lists');
+
   // Show/hide mode sections
   elements.subscriptionsMode.classList.toggle('hidden', mode !== 'subscriptions');
   elements.recommendationsMode.classList.toggle('hidden', mode !== 'recommendations');
-  
+  elements.listsMode.classList.toggle('hidden', mode !== 'lists');
+
   // Update status message
   if (mode === 'subscriptions') {
     setStatus('Go to youtube.com/feed/channels and click "Load Subscriptions"', 'info');
-  } else {
+  } else if (mode === 'recommendations') {
     setStatus('Go to youtube.com homepage and click "Scan Homepage"', 'info');
+  } else {
+    elements.listGaming.value = gamingListText;
+    elements.listMisc.value = miscListText;
+    updateListCounts();
+    setStatus('Edit your lists, then click Save', 'info');
   }
-  
+
   // Hide progress/results when switching
   elements.progressSection.classList.add('hidden');
   elements.resultsSection.classList.add('hidden');
@@ -138,39 +166,112 @@ function switchMode(mode) {
 // ============================================
 // LOAD CHANNEL LISTS
 // ============================================
-async function loadChannelLists() {
-  // Load gaming channels list
+function parseList(text) {
+  return text
+    .split('\n')
+    .map(line => line.trim().toLowerCase())
+    .filter(line => line && !line.startsWith('#'));
+}
+
+async function fetchBundledList(file) {
   try {
-    const gamingUrl = chrome.runtime.getURL('lists/gaming-channels.txt');
-    const response = await fetch(gamingUrl);
-    if (response.ok) {
-      const text = await response.text();
-      gamingChannelsList = text
-        .split('\n')
-        .map(line => line.trim().toLowerCase())
-        .filter(line => line && !line.startsWith('#'));
-      console.log(`Loaded ${gamingChannelsList.length} gaming channels from list`);
-    }
+    const response = await fetch(chrome.runtime.getURL(`lists/${file}`));
+    return response.ok ? await response.text() : '';
   } catch (error) {
-    console.log('Could not load gaming channels list:', error);
-    gamingChannelsList = [];
+    return '';
   }
-  
-  // Load misc channels list
+}
+
+async function loadChannelLists() {
+  // Lists live in chrome.storage so they're editable in the installed
+  // extension. The bundled .txt files only seed storage on first run.
+  const { ykm_lists } = await chrome.storage.local.get('ykm_lists');
+
+  if (ykm_lists && typeof ykm_lists.gaming === 'string') {
+    gamingListText = ykm_lists.gaming;
+    miscListText = ykm_lists.misc || '';
+  } else {
+    gamingListText = await fetchBundledList('gaming-channels.txt');
+    miscListText = await fetchBundledList('misc-channels.txt');
+    await chrome.storage.local.set({ ykm_lists: { gaming: gamingListText, misc: miscListText } });
+  }
+
+  gamingChannelsList = parseList(gamingListText);
+  miscChannelsList = parseList(miscListText);
+}
+
+async function saveLists() {
+  gamingListText = elements.listGaming.value;
+  miscListText = elements.listMisc.value;
+  await chrome.storage.local.set({ ykm_lists: { gaming: gamingListText, misc: miscListText } });
+
+  gamingChannelsList = parseList(gamingListText);
+  miscChannelsList = parseList(miscListText);
+  retagLoadedData();
+  updateListCounts();
+  setStatus(`Saved: ${gamingChannelsList.length} gaming, ${miscChannelsList.length} misc entries`, 'success');
+}
+
+// Pull the canonical lists from the GitHub repo so every profile using the
+// extension can share one source of truth. Lists are data, not code.
+const GITHUB_LISTS_BASE = 'https://raw.githubusercontent.com/ObscureAintSecure/youtube-kids-manager/main/lists/';
+
+async function syncListsFromGitHub() {
+  elements.btnSyncLists.disabled = true;
+  setStatus('Fetching lists from GitHub...', 'info');
   try {
-    const miscUrl = chrome.runtime.getURL('lists/misc-channels.txt');
-    const response = await fetch(miscUrl);
-    if (response.ok) {
-      const text = await response.text();
-      miscChannelsList = text
-        .split('\n')
-        .map(line => line.trim().toLowerCase())
-        .filter(line => line && !line.startsWith('#'));
-      console.log(`Loaded ${miscChannelsList.length} misc channels from list`);
+    const [gamingRes, miscRes] = await Promise.all([
+      fetch(GITHUB_LISTS_BASE + 'gaming-channels.txt', { cache: 'no-cache' }),
+      fetch(GITHUB_LISTS_BASE + 'misc-channels.txt', { cache: 'no-cache' })
+    ]);
+    if (!gamingRes.ok || !miscRes.ok) {
+      throw new Error(`GitHub returned ${gamingRes.ok ? miscRes.status : gamingRes.status}`);
     }
+    elements.listGaming.value = await gamingRes.text();
+    elements.listMisc.value = await miscRes.text();
+    await saveLists();
+    setStatus(`Synced from GitHub: ${gamingChannelsList.length} gaming, ${miscChannelsList.length} misc entries`, 'success');
   } catch (error) {
-    console.log('Could not load misc channels list:', error);
-    miscChannelsList = [];
+    setStatus(`Sync failed: ${error.message}. Lists unchanged.`, 'error');
+  } finally {
+    elements.btnSyncLists.disabled = false;
+  }
+}
+
+async function restoreDefaultLists() {
+  if (!confirm('Replace both lists with the bundled defaults?\n\nYour edits will be lost.')) return;
+  elements.listGaming.value = await fetchBundledList('gaming-channels.txt');
+  elements.listMisc.value = await fetchBundledList('misc-channels.txt');
+  await saveLists();
+}
+
+function updateListCounts() {
+  elements.gamingListCount.textContent = `(${parseList(elements.listGaming.value).length} entries)`;
+  elements.miscListCount.textContent = `(${parseList(elements.listMisc.value).length} entries)`;
+}
+
+// Re-apply list matching to whatever is already loaded in either mode
+function retagLoadedData() {
+  if (channels.length > 0) {
+    channels.forEach(ch => {
+      const blockStatus = isBlockedChannel(ch);
+      ch.isGaming = blockStatus.isGaming;
+      ch.isMisc = blockStatus.isMisc;
+      ch.isBlocked = blockStatus.isBlocked;
+    });
+    renderChannels();
+    updateChannelCounts();
+  }
+  if (foundVideos.length > 0) {
+    foundVideos.forEach(v => {
+      const nameLower = v.channelName.toLowerCase();
+      const handleLower = (v.channelHandle || '').toLowerCase();
+      v.isGaming = gamingChannelsList.some(gc => nameLower === gc || handleLower === gc);
+      v.isMisc = miscChannelsList.some(mc => nameLower === mc || handleLower === mc);
+      v.isBlocked = v.isGaming || v.isMisc;
+    });
+    renderFoundVideos();
+    updateVideoCounts();
   }
 }
 
@@ -328,7 +429,7 @@ function renderChannels() {
       tagHtml += '<span class="channel-tag gaming">Gaming</span>';
     }
     if (channel.isMisc) {
-      tagHtml += '<span class="channel-tag misc">Blocked</span>';
+      tagHtml += '<span class="channel-tag misc">Misc</span>';
     }
     
     div.innerHTML = `
@@ -368,13 +469,14 @@ function renderChannels() {
 }
 
 function updateChannelCounts() {
-  const blockedCount = channels.filter(ch => ch.isBlocked).length;
-  
+  const gamingTagged = channels.filter(ch => ch.isGaming).length;
+  const miscTagged = channels.filter(ch => ch.isMisc).length;
+
   elements.totalCount.textContent = `${channels.length} channels`;
   elements.selectedCount.textContent = `${selectedChannels.size} selected`;
-  
-  if (blockedCount > 0) {
-    elements.gamingCount.textContent = `${blockedCount} on lists`;
+
+  if (gamingTagged + miscTagged > 0) {
+    elements.gamingCount.textContent = `${gamingTagged} gaming, ${miscTagged} misc`;
     elements.gamingCount.classList.remove('hidden');
   } else {
     elements.gamingCount.classList.add('hidden');
@@ -716,7 +818,7 @@ function renderFoundVideos() {
       tagHtml += '<span class="channel-tag gaming">Gaming</span>';
     }
     if (video.isMisc) {
-      tagHtml += '<span class="channel-tag misc">Blocked</span>';
+      tagHtml += '<span class="channel-tag misc">Misc</span>';
     }
     
     div.innerHTML = `
@@ -757,13 +859,14 @@ function renderFoundVideos() {
 }
 
 function updateVideoCounts() {
-  const blockedCount = foundVideos.filter(v => v.isBlocked).length;
-  
+  const gamingTagged = foundVideos.filter(v => v.isGaming).length;
+  const miscTagged = foundVideos.filter(v => v.isMisc).length;
+
   elements.videosFoundCount.textContent = `${foundVideos.length} channels`;
   elements.videosSelectedCount.textContent = `${selectedVideos.size} selected`;
-  
-  if (blockedCount > 0) {
-    elements.videosGamingCount.textContent = `${blockedCount} on lists`;
+
+  if (gamingTagged + miscTagged > 0) {
+    elements.videosGamingCount.textContent = `${gamingTagged} gaming, ${miscTagged} misc`;
     elements.videosGamingCount.classList.remove('hidden');
   } else {
     elements.videosGamingCount.classList.add('hidden');
