@@ -2,7 +2,7 @@
 # =============================================
 # Known gaming YouTube channel names/handles.
 # One channel per line. Case-insensitive matching.
-# Total channels: 672
+# Total channels: 671
 # =============================================
 
 100 thieves
@@ -514,7 +514,6 @@ sernando
 sharkboysam
 sharkyshark
 shirrako
-shonci
 shortcat321
 shotzzy
 shroud

@@ -47,6 +47,7 @@ function initElements() {
   elements.filterSection = document.getElementById('filter-section');
   elements.searchInput = document.getElementById('search-input');
   elements.btnSearch = document.getElementById('btn-search');
+  elements.btnSelectMatching = document.getElementById('btn-select-matching');
   elements.btnDetectGaming = document.getElementById('btn-detect-gaming');
   elements.btnSelectAll = document.getElementById('btn-select-all');
   elements.btnSelectNone = document.getElementById('btn-select-none');
@@ -120,6 +121,7 @@ function setupEventListeners() {
   // Subscriptions mode
   elements.btnLoad.addEventListener('click', loadSubscriptions);
   elements.btnSearch.addEventListener('click', filterBySearch);
+  elements.btnSelectMatching.addEventListener('click', selectMatchingChannels);
   elements.searchInput.addEventListener('keyup', (e) => {
     if (e.key === 'Enter') filterBySearch();
   });
@@ -402,6 +404,9 @@ async function scrapeSubscriptions() {
     
     const avatarEl = el.querySelector('img#img, yt-img-shadow img');
     const linkEl = el.querySelector('a#main-link, a.channel-link');
+
+    const descEl = el.querySelector('#description, yt-formatted-string#description');
+    const description = descEl ? descEl.textContent.trim() : '';
     
     // Extract handle from URL - this is our unique identifier
     let handle = '';
@@ -419,6 +424,7 @@ async function scrapeSubscriptions() {
         id: index,
         name: name,
         handle: handle,  // e.g., "hiartofcrime"
+        description: description,
         avatar: avatarEl ? avatarEl.src : '',
         channelUrl: channelUrl,
         isGaming: false
@@ -437,6 +443,7 @@ function renderChannels() {
     div.className = `channel-item ${channel.isBlocked ? 'gaming' : ''}`;
     div.dataset.id = channel.id;
     div.dataset.name = channel.name.toLowerCase();
+    div.dataset.search = `${channel.name} ${channel.handle} ${channel.description || ''}`.toLowerCase();
     
     // Build tag display
     let tagHtml = '';
@@ -503,11 +510,29 @@ function updateChannelCounts() {
 
 function filterBySearch() {
   const query = elements.searchInput.value.toLowerCase().trim();
-  
+
   document.querySelectorAll('#channel-list .channel-item').forEach(item => {
-    const name = item.dataset.name;
-    item.classList.toggle('filtered-out', query && !name.includes(query));
+    item.classList.toggle('filtered-out', query && !item.dataset.search.includes(query));
   });
+}
+
+// Add every channel whose name, handle, or description contains the keyword
+// to the current selection. Additive so multiple keyword sweeps compose.
+function selectMatchingChannels() {
+  const query = elements.searchInput.value.toLowerCase().trim();
+  if (!query || channels.length === 0) return;
+
+  const matches = channels.filter(ch =>
+    `${ch.name} ${ch.handle} ${ch.description || ''}`.toLowerCase().includes(query)
+  );
+  matches.forEach(ch => selectedChannels.add(ch.id));
+
+  document.querySelectorAll('#channel-list .channel-checkbox').forEach(cb => {
+    cb.checked = selectedChannels.has(parseInt(cb.dataset.id));
+  });
+
+  updateChannelCounts();
+  setStatus(`"${query}": ${matches.length} match(es) added — ${selectedChannels.size} selected total`, matches.length ? 'success' : 'info');
 }
 
 function detectGamingChannels() {
