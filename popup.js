@@ -141,14 +141,14 @@ function setupEventListeners() {
   elements.btnSuggestSubs.addEventListener('click', () => {
     const picked = Array.from(selectedChannels)
       .map(id => channels.find(c => c.id === id))
-      .filter(Boolean)
+      .filter(c => c && !c.isBlocked) // skip channels already on the lists
       .map(c => ({ name: c.name, handle: c.handle }));
     openSuggestionIssue(picked);
   });
   elements.btnSuggestVideos.addEventListener('click', () => {
     const picked = Array.from(selectedVideos)
       .map(id => foundVideos.find(v => v.id === id))
-      .filter(Boolean)
+      .filter(v => v && !v.isBlocked) // skip channels already on the lists
       .map(v => ({ name: v.channelName, handle: v.channelHandle || '' }));
     openSuggestionIssue(picked);
   });
@@ -546,8 +546,10 @@ function updateChannelCounts() {
   elements.btnUnsubscribe.textContent = `🗑️ Unsubscribe Selected (${selectedChannels.size})`;
   elements.btnUnsubscribe.disabled = selectedChannels.size === 0;
 
-  elements.btnSuggestSubs.textContent = `💡 Suggest Selected for Shared Lists (${selectedChannels.size})`;
-  elements.btnSuggestSubs.disabled = selectedChannels.size === 0;
+  // Only channels not already on the lists are worth suggesting
+  const suggestableSubs = channels.filter(ch => selectedChannels.has(ch.id) && !ch.isBlocked).length;
+  elements.btnSuggestSubs.textContent = `💡 Suggest Selected for Shared Lists (${suggestableSubs} new)`;
+  elements.btnSuggestSubs.disabled = suggestableSubs === 0;
 }
 
 function filterBySearch() {
@@ -998,8 +1000,10 @@ function updateVideoCounts() {
   elements.btnBlockSelected.textContent = `🚫 Don't Recommend Channels (${selectedVideos.size})`;
   elements.btnBlockSelected.disabled = selectedVideos.size === 0;
 
-  elements.btnSuggestVideos.textContent = `💡 Suggest Selected for Shared Lists (${selectedVideos.size})`;
-  elements.btnSuggestVideos.disabled = selectedVideos.size === 0;
+  // Only channels not already on the lists are worth suggesting
+  const suggestableVideos = foundVideos.filter(v => selectedVideos.has(v.id) && !v.isBlocked).length;
+  elements.btnSuggestVideos.textContent = `💡 Suggest Selected for Shared Lists (${suggestableVideos} new)`;
+  elements.btnSuggestVideos.disabled = suggestableVideos === 0;
 }
 
 function filterVideosBySearch() {
