@@ -1,8 +1,7 @@
-# YouTube Kids Manager - Gaming Channels List
+# YouTube Manager for Parents - Gaming Channels List
 # =============================================
 # Known gaming YouTube channel names/handles.
-# One channel per line. Case-insensitive matching.
-# Total channels: 671
+# One channel per line. Case-INsensitive matching.
 # =============================================
 
 100 thieves
