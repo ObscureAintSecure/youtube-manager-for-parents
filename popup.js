@@ -34,8 +34,6 @@ function initElements() {
   elements.gamingListCount = document.getElementById('gaming-list-count');
   elements.miscListCount = document.getElementById('misc-list-count');
   elements.btnRefreshLists = document.getElementById('btn-refresh-lists');
-  elements.btnEditGaming = document.getElementById('btn-edit-gaming');
-  elements.btnEditMisc = document.getElementById('btn-edit-misc');
   elements.listsSyncStatus = document.getElementById('lists-sync-status');
   
   // Status
@@ -120,12 +118,6 @@ function setupEventListeners() {
 
   // Lists mode
   elements.btnRefreshLists.addEventListener('click', () => refreshListsFromGitHub(true));
-  elements.btnEditGaming.addEventListener('click', () => {
-    chrome.tabs.create({ url: GITHUB_EDIT_BASE + 'gaming-channels.txt' });
-  });
-  elements.btnEditMisc.addEventListener('click', () => {
-    chrome.tabs.create({ url: GITHUB_EDIT_BASE + 'misc-channels.txt' });
-  });
   
   // Subscriptions mode
   elements.btnLoad.addEventListener('click', loadSubscriptions);
@@ -233,7 +225,6 @@ async function fetchBundledList(file) {
 // the latest copies on every popup open; storage holds a cache for when
 // GitHub is unreachable; the bundled .txt files are the last-resort fallback.
 const GITHUB_LISTS_BASE = 'https://raw.githubusercontent.com/ObscureAintSecure/youtube-kids-manager/main/lists/';
-const GITHUB_EDIT_BASE = 'https://github.com/ObscureAintSecure/youtube-kids-manager/edit/main/lists/';
 
 async function loadChannelLists() {
   const { ykm_lists } = await chrome.storage.local.get('ykm_lists');
