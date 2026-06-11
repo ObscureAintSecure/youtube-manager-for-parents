@@ -355,6 +355,21 @@ header h1 {
   margin-left: 4px;
 }
 
+/* Link-style button */
+.btn-link {
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  color: #1565c0;
+}
+
 /* List Editor */
 .list-editor {
   width: 100%;

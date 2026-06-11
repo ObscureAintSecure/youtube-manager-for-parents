@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Kids Manager</title>
+  <title>YouTube Manager for Parents</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>🎮 YouTube Kids Manager</h1>
+      <h1>🎮 YouTube Manager for Parents</h1>
       <p class="subtitle">Manage your child's YouTube experience</p>
     </header>
 
@@ -34,7 +34,9 @@
         <button id="btn-load" class="btn btn-primary btn-large">
           📋 Load Subscriptions
         </button>
-        <p class="help-text">Go to youtube.com/feed/channels first</p>
+        <p class="help-text">
+          <button id="btn-goto-subs" class="btn-link">📍 Take me to the subscriptions page</button>
+        </p>
       </section>
 
       <!-- Filters (hidden until loaded) -->
@@ -97,12 +99,19 @@
         <button id="btn-scan-home" class="btn btn-primary btn-large">
           🔍 Scan Homepage
         </button>
-        <p class="help-text">Go to youtube.com homepage first</p>
+        <p class="help-text">
+          <button id="btn-goto-home" class="btn-link">📍 Take me to the YouTube homepage</button>
+        </p>
       </section>
 
       <!-- Found videos section -->
       <section id="found-videos-section" class="section hidden">
         <h2>Channels on Homepage</h2>
+        <div class="filter-row">
+          <input type="text" id="video-search-input" placeholder="Keyword: channel, video title..." class="search-input">
+          <button id="btn-video-search" class="btn btn-small" title="Filter the list">🔍</button>
+          <button id="btn-select-matching-videos" class="btn btn-small btn-warning" title="Add all matching channels to selection">✓ Select</button>
+        </div>
         <div class="filter-buttons">
           <button id="btn-select-gaming-videos" class="btn btn-warning">📋 Listed Only</button>
           <button id="btn-select-all-videos" class="btn btn-secondary">All</button>
@@ -173,7 +182,7 @@
     </section>
 
     <footer>
-      <p>v1.9.0</p>
+      <p>v2.0.0 · <a href="https://buymeacoffee.com/obscureaintsecure" target="_blank" rel="noopener">☕ Buy me a coffee</a></p>
     </footer>
   </div>
 

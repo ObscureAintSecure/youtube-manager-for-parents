@@ -61,8 +61,15 @@ function initElements() {
   elements.actionSection = document.getElementById('action-section');
   elements.btnUnsubscribe = document.getElementById('btn-unsubscribe');
   
+  // Navigation shortcuts
+  elements.btnGotoSubs = document.getElementById('btn-goto-subs');
+  elements.btnGotoHome = document.getElementById('btn-goto-home');
+
   // Recommendations mode
   elements.btnScanHome = document.getElementById('btn-scan-home');
+  elements.videoSearchInput = document.getElementById('video-search-input');
+  elements.btnVideoSearch = document.getElementById('btn-video-search');
+  elements.btnSelectMatchingVideos = document.getElementById('btn-select-matching-videos');
   elements.foundVideosSection = document.getElementById('found-videos-section');
   elements.videosFoundCount = document.getElementById('videos-found-count');
   elements.videosSelectedCount = document.getElementById('videos-selected-count');
@@ -131,8 +138,21 @@ function setupEventListeners() {
   elements.btnSelectBottom.addEventListener('click', selectBottomN);
   elements.btnUnsubscribe.addEventListener('click', startUnsubscribe);
   
+  // Navigation shortcuts
+  elements.btnGotoSubs.addEventListener('click', () => {
+    chrome.tabs.update({ url: 'https://www.youtube.com/feed/channels' });
+  });
+  elements.btnGotoHome.addEventListener('click', () => {
+    chrome.tabs.update({ url: 'https://www.youtube.com/' });
+  });
+
   // Recommendations mode
   elements.btnScanHome.addEventListener('click', scanHomepageForGaming);
+  elements.btnVideoSearch.addEventListener('click', filterVideosBySearch);
+  elements.btnSelectMatchingVideos.addEventListener('click', selectMatchingVideos);
+  elements.videoSearchInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') filterVideosBySearch();
+  });
   elements.btnBlockSelected.addEventListener('click', startBlockingChannels);
   elements.btnSelectGamingVideos.addEventListener('click', selectGamingVideos);
   elements.btnSelectAllVideos.addEventListener('click', selectAllVideos);
@@ -743,7 +763,7 @@ async function batchUnsubscribeDriver(targets) {
 // RECOMMENDATIONS MODE
 // ============================================
 async function scanHomepageForGaming() {
-  setStatus('Scanning homepage for videos...', 'info');
+  setStatus('Scanning homepage (auto-scrolling to load more)...', 'info');
   elements.btnScanHome.disabled = true;
   elements.btnScanHome.innerHTML = '<span class="loading"></span> Scanning...';
 
@@ -765,7 +785,7 @@ async function scanHomepageForGaming() {
       foundVideos = results[0].result;
       
       if (foundVideos.length === 0) {
-        setStatus('No videos found on this page. Try scrolling down to load more videos, then scan again.', 'info');
+        setStatus('No videos found. Make sure you\'re on the YouTube homepage, then scan again.', 'info');
         elements.foundVideosSection.classList.add('hidden');
         elements.blockActionSection.classList.add('hidden');
       } else {
@@ -789,7 +809,27 @@ async function scanHomepageForGaming() {
   }
 }
 
-function scanHomePageVideos(gamingList, miscList) {
+async function scanHomePageVideos(gamingList, miscList) {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // Homepage is an infinite feed, so auto-scroll with a cap: stop when
+  // tiles stop appearing, we have plenty, or we hit the round limit.
+  let lastCount = 0;
+  let stableRounds = 0;
+  for (let i = 0; i < 8 && stableRounds < 2; i++) {
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    await sleep(900);
+    const count = document.querySelectorAll('ytd-rich-item-renderer').length;
+    if (count >= 300) break;
+    if (count === lastCount) {
+      stableRounds++;
+    } else {
+      stableRounds = 0;
+      lastCount = count;
+    }
+  }
+  window.scrollTo(0, 0);
+
   const videoElements = document.querySelectorAll('ytd-rich-item-renderer');
   const channelMap = new Map(); // channelKey -> channel data
 
@@ -868,6 +908,7 @@ function renderFoundVideos() {
     const div = document.createElement('div');
     div.className = `channel-item${video.isBlocked ? ' gaming' : ''}`;
     div.dataset.id = video.id;
+    div.dataset.search = `${video.channelName} ${video.channelHandle || ''} ${video.videoTitle || ''}`.toLowerCase();
     
     const handleDisplay = video.channelHandle ? ` (@${video.channelHandle})` : '';
     const countDisplay = video.videoCount > 1 ? ` <span class="video-count">(${video.videoCount} videos)</span>` : '';
@@ -934,6 +975,33 @@ function updateVideoCounts() {
   
   elements.btnBlockSelected.textContent = `🚫 Don't Recommend Channels (${selectedVideos.size})`;
   elements.btnBlockSelected.disabled = selectedVideos.size === 0;
+}
+
+function filterVideosBySearch() {
+  const query = elements.videoSearchInput.value.toLowerCase().trim();
+
+  document.querySelectorAll('#video-list .channel-item').forEach(item => {
+    item.classList.toggle('filtered-out', query && !item.dataset.search.includes(query));
+  });
+}
+
+// Add every scanned channel whose name, handle, or video title contains
+// the keyword to the current selection. Additive, same as subscriptions.
+function selectMatchingVideos() {
+  const query = elements.videoSearchInput.value.toLowerCase().trim();
+  if (!query || foundVideos.length === 0) return;
+
+  const matches = foundVideos.filter(v =>
+    `${v.channelName} ${v.channelHandle || ''} ${v.videoTitle || ''}`.toLowerCase().includes(query)
+  );
+  matches.forEach(v => selectedVideos.add(v.id));
+
+  document.querySelectorAll('#video-list .channel-checkbox').forEach(cb => {
+    cb.checked = selectedVideos.has(parseInt(cb.dataset.id));
+  });
+
+  updateVideoCounts();
+  setStatus(`"${query}": ${matches.length} match(es) added — ${selectedVideos.size} selected total`, matches.length ? 'success' : 'info');
 }
 
 function selectGamingVideos() {
