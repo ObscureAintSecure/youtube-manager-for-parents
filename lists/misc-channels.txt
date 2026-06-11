@@ -1,9 +1,7 @@
 # YouTube Manager for Parents - Miscellaneous Blocked Channels
 # Add channel names or handles (without @) here, one per line
 # Lines starting with # are comments
-
 # Example entries (remove or replace with your own):
 # channelname
 
 Dolores Hicks
-
