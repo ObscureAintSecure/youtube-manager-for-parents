@@ -1,0 +1,102 @@
+name: Process approved channel suggestion
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  add-channels:
+    if: github.event.label.name == 'approved' && startsWith(github.event.issue.title, 'Channel suggestion')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Append suggested channels to list
+        id: append
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = context.payload.issue.body || '';
+
+            // Target list: "gaming" (default) or "misc"
+            const targetMatch = body.match(/target list:\s*(gaming|misc)/i);
+            const target = targetMatch ? targetMatch[1].toLowerCase() : 'gaming';
+            const file = target === 'misc' ? 'lists/misc-channels.txt' : 'lists/gaming-channels.txt';
+
+            // Channel lines look like "- Name | handle" or "- Name".
+            // Prefer the handle (stable across renames) when present.
+            const entries = [];
+            for (const line of body.split('\n')) {
+              const m = line.match(/^-\s+(.+?)(?:\s*\|\s*(\S+))?\s*$/);
+              if (!m) continue;
+              const entry = (m[2] || m[1]).trim().replace(/^@/, '');
+              // Plain channel names/handles only - no comment chars or paths
+              if (entry && entry.length <= 100 && !/[#<>\\\/]/.test(entry)) {
+                entries.push(entry);
+              }
+            }
+
+            if (entries.length === 0) {
+              core.setOutput('added', '0');
+              core.setOutput('summary', 'No valid channel lines found in the issue body.');
+              return;
+            }
+
+            let content = fs.readFileSync(file, 'utf8');
+            const existing = new Set(
+              content.split('\n').map(l => l.trim().toLowerCase()).filter(Boolean)
+            );
+
+            const fresh = [];
+            for (const e of entries) {
+              if (!existing.has(e.toLowerCase())) {
+                fresh.push(e);
+                existing.add(e.toLowerCase());
+              }
+            }
+
+            if (fresh.length > 0) {
+              if (!content.endsWith('\n')) content += '\n';
+              content += fresh.join('\n') + '\n';
+              fs.writeFileSync(file, content);
+            }
+
+            const skipped = entries.length - fresh.length;
+            core.setOutput('added', String(fresh.length));
+            core.setOutput('file', file);
+            core.setOutput('summary',
+              `Added ${fresh.length} channel(s) to \`${file}\`` +
+              (skipped > 0 ? ` (${skipped} already on the list)` : '') + '.');
+
+      - name: Commit and push
+        if: steps.append.outputs.added != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lists/
+          git commit -m "chore(lists): add ${{ steps.append.outputs.added }} suggested channel(s) (closes #${{ github.event.issue.number }})"
+          git push
+
+      - name: Comment and close issue
+        uses: actions/github-script@v7
+        env:
+          SUMMARY: ${{ steps.append.outputs.summary }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: process.env.SUMMARY + ' Lists update in the extension within a few minutes. Thanks for the suggestion!'
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              state: 'closed'
+            });

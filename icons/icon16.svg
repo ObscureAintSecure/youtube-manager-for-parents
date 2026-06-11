@@ -1,0 +1,7 @@
+<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+<!-- Background circle, no stroke - 2px ring invisible at this size -->
+<circle cx="8" cy="8" r="8" fill="#1f1f1f"/>
+
+<!-- Single bold Y -->
+<text x="8" y="12.5" font-size="12" font-weight="bold" font-family="Arial, sans-serif" fill="#FB8429" text-anchor="middle">Y</text>
+</svg>

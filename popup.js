@@ -53,6 +53,8 @@ function initElements() {
   elements.btnSelectNone = document.getElementById('btn-select-none');
   elements.bottomNInput = document.getElementById('bottom-n-input');
   elements.btnSelectBottom = document.getElementById('btn-select-bottom');
+  elements.btnSuggestSubs = document.getElementById('btn-suggest-subs');
+  elements.btnSuggestVideos = document.getElementById('btn-suggest-videos');
   elements.totalCount = document.getElementById('total-count');
   elements.selectedCount = document.getElementById('selected-count');
   elements.gamingCount = document.getElementById('gaming-count');
@@ -136,6 +138,20 @@ function setupEventListeners() {
   elements.btnSelectAll.addEventListener('click', selectAllChannels);
   elements.btnSelectNone.addEventListener('click', selectNoneChannels);
   elements.btnSelectBottom.addEventListener('click', selectBottomN);
+  elements.btnSuggestSubs.addEventListener('click', () => {
+    const picked = Array.from(selectedChannels)
+      .map(id => channels.find(c => c.id === id))
+      .filter(Boolean)
+      .map(c => ({ name: c.name, handle: c.handle }));
+    openSuggestionIssue(picked);
+  });
+  elements.btnSuggestVideos.addEventListener('click', () => {
+    const picked = Array.from(selectedVideos)
+      .map(id => foundVideos.find(v => v.id === id))
+      .filter(Boolean)
+      .map(v => ({ name: v.channelName, handle: v.channelHandle || '' }));
+    openSuggestionIssue(picked);
+  });
   elements.btnUnsubscribe.addEventListener('click', startUnsubscribe);
   
   // Navigation shortcuts
@@ -1187,6 +1203,45 @@ async function batchBlockDriver(targets) {
 
   await report({ state: 'finished', done: targets.length, results });
   return results;
+}
+
+// ============================================
+// CHANNEL SUGGESTIONS (GitHub issue + Action pipeline)
+// ============================================
+const GITHUB_REPO_URL = 'https://github.com/ObscureAintSecure/youtube-kids-manager';
+const MAX_SUGGESTIONS_PER_ISSUE = 30;
+
+// Opens a prefilled GitHub issue suggesting the selected channels for the
+// shared lists. The repo's process-suggestion workflow appends them to the
+// list files once the maintainer adds the "approved" label.
+function openSuggestionIssue(picked) {
+  if (picked.length === 0) {
+    setStatus('Select at least one channel first, then click Suggest', 'error');
+    return;
+  }
+
+  const capped = picked.slice(0, MAX_SUGGESTIONS_PER_ISSUE);
+  const lines = capped.map(c => `- ${c.name}${c.handle ? ` | ${c.handle}` : ''}`).join('\n');
+
+  const body = [
+    'Target list: gaming',
+    '',
+    '<!-- Change "gaming" to "misc" above if these are not gaming channels. -->',
+    '<!-- Remove any lines you did not mean to include. -->',
+    '',
+    'Channels:',
+    lines,
+    '',
+    `_Submitted from YouTube Manager for Parents._`
+  ].join('\n');
+
+  const title = `Channel suggestion: ${capped.length} channel(s)`;
+  const url = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+  chrome.tabs.create({ url });
+
+  if (picked.length > capped.length) {
+    setStatus(`Opened suggestion with first ${MAX_SUGGESTIONS_PER_ISSUE} of ${picked.length} selected channels`, 'info');
+  }
 }
 
 // ============================================

@@ -1,0 +1,7 @@
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+<!-- Background circle -->
+<circle cx="64" cy="64" r="60" fill="#1f1f1f" stroke="#FB8429" stroke-width="2"/>
+
+<!-- YTM4P text -->
+<text x="64" y="77" font-size="34" font-weight="bold" font-family="Arial, sans-serif" fill="#FB8429" text-anchor="middle">YTM4P</text>
+</svg>
