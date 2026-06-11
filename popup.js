@@ -545,6 +545,9 @@ function updateChannelCounts() {
 
   elements.btnUnsubscribe.textContent = `🗑️ Unsubscribe Selected (${selectedChannels.size})`;
   elements.btnUnsubscribe.disabled = selectedChannels.size === 0;
+
+  elements.btnSuggestSubs.textContent = `💡 Suggest Selected for Shared Lists (${selectedChannels.size})`;
+  elements.btnSuggestSubs.disabled = selectedChannels.size === 0;
 }
 
 function filterBySearch() {
@@ -994,6 +997,9 @@ function updateVideoCounts() {
   
   elements.btnBlockSelected.textContent = `🚫 Don't Recommend Channels (${selectedVideos.size})`;
   elements.btnBlockSelected.disabled = selectedVideos.size === 0;
+
+  elements.btnSuggestVideos.textContent = `💡 Suggest Selected for Shared Lists (${selectedVideos.size})`;
+  elements.btnSuggestVideos.disabled = selectedVideos.size === 0;
 }
 
 function filterVideosBySearch() {
