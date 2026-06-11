@@ -100,13 +100,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   initElements();
   await loadChannelLists();
   setupEventListeners();
-  switchMode('subscriptions');
+  switchMode('recommendations');
   refreshListsFromGitHub(); // pull latest lists in the background
 
   // If a batch is running (or finished while popup was closed), reattach
   const { ykm_progress } = await chrome.storage.local.get('ykm_progress');
   if (ykm_progress) {
-    if (ykm_progress.action === 'block') switchMode('recommendations');
+    if (ykm_progress.action === 'unsubscribe') switchMode('subscriptions');
     hideAllSections();
     watchProgress();
   }
