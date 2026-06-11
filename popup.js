@@ -192,11 +192,14 @@ function switchMode(mode) {
   elements.recommendationsMode.classList.toggle('hidden', mode !== 'recommendations');
   elements.listsMode.classList.toggle('hidden', mode !== 'lists');
 
-  // Update status message
+  // Update status message and which "take me there" link shows
+  elements.btnGotoSubs.classList.toggle('hidden', mode !== 'subscriptions');
+  elements.btnGotoHome.classList.toggle('hidden', mode !== 'recommendations');
+
   if (mode === 'subscriptions') {
-    setStatus('Go to youtube.com/feed/channels and click "Load Subscriptions"', 'info');
+    setStatus('Go to youtube.com/feed/channels and click the "Load Subscriptions" button below', 'info');
   } else if (mode === 'recommendations') {
-    setStatus('Go to youtube.com homepage and click "Scan Homepage"', 'info');
+    setStatus('Go to youtube.com homepage and click the "Scan Homepage" button below', 'info');
   } else {
     fillListsView();
     setStatus('Lists are read-only here. Edit on GitHub, then Refresh.', 'info');
