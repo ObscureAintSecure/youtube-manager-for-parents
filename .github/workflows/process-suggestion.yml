@@ -8,6 +8,11 @@ permissions:
   contents: write
   issues: write
 
+# Serialize runs - two approvals at once otherwise race on the push
+concurrency:
+  group: process-suggestion
+  cancel-in-progress: false
+
 jobs:
   add-channels:
     if: github.event.label.name == 'approved' && startsWith(github.event.issue.title, 'Channel suggestion')
@@ -80,6 +85,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add lists/
           git commit -m "chore(lists): add ${{ steps.append.outputs.added }} suggested channel(s) (closes #${{ github.event.issue.number }})"
+          git pull --rebase origin main
           git push
 
       - name: Comment and close issue
