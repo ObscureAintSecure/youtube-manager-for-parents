@@ -548,7 +548,7 @@ function updateChannelCounts() {
 
   // Only channels not already on the lists are worth suggesting
   const suggestableSubs = channels.filter(ch => selectedChannels.has(ch.id) && !ch.isBlocked).length;
-  elements.btnSuggestSubs.textContent = `💡 Suggest Selected for Shared Lists (${suggestableSubs} new)`;
+  elements.btnSuggestSubs.innerHTML = `<span>💡 Suggest Selected for Shared Lists</span><span>(${suggestableSubs} new)</span>`;
   elements.btnSuggestSubs.disabled = suggestableSubs === 0;
 }
 
@@ -1002,7 +1002,7 @@ function updateVideoCounts() {
 
   // Only channels not already on the lists are worth suggesting
   const suggestableVideos = foundVideos.filter(v => selectedVideos.has(v.id) && !v.isBlocked).length;
-  elements.btnSuggestVideos.textContent = `💡 Suggest Selected for Shared Lists (${suggestableVideos} new)`;
+  elements.btnSuggestVideos.innerHTML = `<span>💡 Suggest Selected for Shared Lists</span><span>(${suggestableVideos} new)</span>`;
   elements.btnSuggestVideos.disabled = suggestableVideos === 0;
 }
 
