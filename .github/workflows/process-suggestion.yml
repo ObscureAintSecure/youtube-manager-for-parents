@@ -94,9 +94,19 @@ jobs:
               issue_number: context.payload.issue.number,
               body: process.env.SUMMARY + ' Lists update in the extension within a few minutes. Thanks for the suggestion!'
             });
-            await github.rest.issues.update({
+            // The push commit's "closes #N" usually closes the issue already;
+            // only close explicitly if it is somehow still open (e.g. nothing
+            // was committed because every channel was a duplicate).
+            const { data: issue } = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.issue.number,
-              state: 'closed'
+              issue_number: context.payload.issue.number
             });
+            if (issue.state === 'open') {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                state: 'closed'
+              });
+            }
