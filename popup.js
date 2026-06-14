@@ -15,6 +15,8 @@ let miscListText = '';
 let recommendedListText = '';
 let recommendedHandles = [];
 let selectedDiscover = new Set();
+let subscribedHandles = new Set(); // lowercased handles the account follows
+let subsChecked = false;
 let listsFetchedAt = null;
 let isRunning = false;
 let currentMode = 'subscriptions';
@@ -44,6 +46,8 @@ function initElements() {
   elements.discoverSelectedCount = document.getElementById('discover-selected-count');
   elements.discoverList = document.getElementById('discover-list');
   elements.btnSubscribeDiscover = document.getElementById('btn-subscribe-discover');
+  elements.btnCheckSubsDiscover = document.getElementById('btn-check-subs-discover');
+  elements.discoverSubbedCount = document.getElementById('discover-subbed-count');
   elements.linkViewRecommended = document.getElementById('link-view-recommended');
 
   // Lists mode
@@ -164,6 +168,7 @@ function setupEventListeners() {
   elements.btnSelectAllDiscover.addEventListener('click', selectAllDiscover);
   elements.btnSelectNoneDiscover.addEventListener('click', selectNoneDiscover);
   elements.btnSubscribeDiscover.addEventListener('click', startSubscribeDiscover);
+  elements.btnCheckSubsDiscover.addEventListener('click', checkSubscribedForDiscover);
 
   // Lists mode
   elements.btnRefreshLists.addEventListener('click', () => refreshListsFromGitHub(true));
@@ -495,6 +500,9 @@ async function loadSubscriptions() {
         ch.isMisc = blockStatus.isMisc;
         ch.isBlocked = blockStatus.isBlocked;
       });
+
+      // Record subscribed handles so the For Kids tab can mark followed channels
+      setSubscribedFromChannels();
 
       renderChannels();
       elements.filterSection.classList.remove('hidden');
@@ -1699,11 +1707,18 @@ function renderDiscover() {
     div.className = 'channel-item';
     div.dataset.id = index;
 
+    const subbed = subscribedHandles.has(handle.toLowerCase());
+    const badge = subsChecked
+      ? (subbed
+          ? '<span class="channel-tag" style="background:#2e7d32;color:#fff;">✓ Subscribed</span>'
+          : '<span class="channel-tag" style="background:#bbb;color:#fff;">Not subscribed</span>')
+      : '';
+
     div.innerHTML = `
       <input type="checkbox" class="channel-checkbox" data-id="${index}"
         ${selectedDiscover.has(index) ? 'checked' : ''}>
       <div class="channel-info">
-        <span class="channel-name">@${escapeHtml(handle)}</span>
+        <span class="channel-name">@${escapeHtml(handle)}${badge}</span>
       </div>
       <a class="btn-link" href="https://www.youtube.com/@${encodeURIComponent(handle)}" target="_blank" rel="noopener">Open ▶</a>
     `;
@@ -1733,8 +1748,52 @@ function updateDiscoverCounts() {
   elements.discoverFoundCount.textContent = `${recommendedHandles.length} channels`;
   elements.discoverSelectedCount.textContent = `${selectedDiscover.size} selected`;
 
+  if (subsChecked) {
+    const n = recommendedHandles.filter(h => subscribedHandles.has(h.toLowerCase())).length;
+    elements.discoverSubbedCount.textContent = `${n} subscribed`;
+    elements.discoverSubbedCount.classList.remove('hidden');
+  } else {
+    elements.discoverSubbedCount.classList.add('hidden');
+  }
+
   elements.btnSubscribeDiscover.textContent = `➕ Subscribe to Selected (${selectedDiscover.size})`;
   elements.btnSubscribeDiscover.disabled = selectedDiscover.size === 0;
+}
+
+// Build the subscribed-handle set from a completed subscriptions scrape
+function setSubscribedFromChannels() {
+  subscribedHandles = new Set(
+    channels.map(c => (c.handle || '').toLowerCase()).filter(Boolean)
+  );
+  subsChecked = true;
+}
+
+// On-demand: scrape /feed/channels to learn which recommended channels are followed
+async function checkSubscribedForDiscover() {
+  elements.btnCheckSubsDiscover.disabled = true;
+  setStatus('Checking your subscriptions...', 'info');
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab.url.includes('youtube.com/feed/channels')) {
+      throw new Error('Open youtube.com/feed/channels, then click Check Subscribed');
+    }
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: scrapeSubscriptions
+    });
+    const scraped = (results && results[0] && results[0].result) || [];
+    if (scraped.length === 0) throw new Error('No subscriptions found on the page');
+
+    channels = scraped;
+    setSubscribedFromChannels();
+    renderDiscover();
+    const onList = recommendedHandles.filter(h => subscribedHandles.has(h.toLowerCase())).length;
+    setStatus(`Checked ${scraped.length} subscriptions — ${onList} of the recommended channels are followed`, 'success');
+  } catch (error) {
+    setStatus(error.message, 'error');
+  } finally {
+    elements.btnCheckSubsDiscover.disabled = false;
+  }
 }
 
 function selectAllDiscover() {
@@ -1789,6 +1848,7 @@ async function startSubscribeDiscover() {
     } catch (e) {
       outcome = { ok: false, reason: e.message };
     }
+    if (outcome.ok) { subscribedHandles.add(handle.toLowerCase()); subsChecked = true; }
     results.push({ name: '@' + handle, ok: outcome.ok, reason: outcome.reason });
     updateProgress(i + 1, targets.length, `Subscribing: @${handle}`);
   }
