@@ -6,6 +6,8 @@ let channels = [];
 let selectedChannels = new Set();
 let foundVideos = [];
 let selectedVideos = new Set();
+let historyVideos = [];
+let selectedHistory = new Set();
 let gamingChannelsList = [];
 let miscChannelsList = [];
 let gamingListText = '';
@@ -23,9 +25,11 @@ function initElements() {
   // Tabs
   elements.tabSubscriptions = document.getElementById('tab-subscriptions');
   elements.tabRecommendations = document.getElementById('tab-recommendations');
+  elements.tabHistory = document.getElementById('tab-history');
   elements.tabLists = document.getElementById('tab-lists');
   elements.subscriptionsMode = document.getElementById('subscriptions-mode');
   elements.recommendationsMode = document.getElementById('recommendations-mode');
+  elements.historyMode = document.getElementById('history-mode');
   elements.listsMode = document.getElementById('lists-mode');
 
   // Lists mode
@@ -64,6 +68,23 @@ function initElements() {
   // Navigation shortcuts
   elements.btnGotoSubs = document.getElementById('btn-goto-subs');
   elements.btnGotoHome = document.getElementById('btn-goto-home');
+  elements.btnGotoHistory = document.getElementById('btn-goto-history');
+
+  // History mode
+  elements.btnScanHistory = document.getElementById('btn-scan-history');
+  elements.historySearchInput = document.getElementById('history-search-input');
+  elements.btnHistorySearch = document.getElementById('btn-history-search');
+  elements.btnSelectMatchingHistory = document.getElementById('btn-select-matching-history');
+  elements.historyVideosSection = document.getElementById('history-videos-section');
+  elements.historyFoundCount = document.getElementById('history-found-count');
+  elements.historySelectedCount = document.getElementById('history-selected-count');
+  elements.historyGamingCount = document.getElementById('history-gaming-count');
+  elements.historyList = document.getElementById('history-list');
+  elements.historyActionSection = document.getElementById('history-action-section');
+  elements.btnRemoveHistory = document.getElementById('btn-remove-history');
+  elements.btnSelectGamingHistory = document.getElementById('btn-select-gaming-history');
+  elements.btnSelectAllHistory = document.getElementById('btn-select-all-history');
+  elements.btnSelectNoneHistory = document.getElementById('btn-select-none-history');
 
   // Recommendations mode
   elements.btnScanHome = document.getElementById('btn-scan-home');
@@ -105,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const { ykm_progress } = await chrome.storage.local.get('ykm_progress');
   if (ykm_progress) {
     if (ykm_progress.action === 'unsubscribe') switchMode('subscriptions');
+    else if (ykm_progress.action === 'history') switchMode('history');
     hideAllSections();
     watchProgress();
   }
@@ -114,6 +136,7 @@ function setupEventListeners() {
   // Tab switching
   elements.tabSubscriptions.addEventListener('click', () => switchMode('subscriptions'));
   elements.tabRecommendations.addEventListener('click', () => switchMode('recommendations'));
+  elements.tabHistory.addEventListener('click', () => switchMode('history'));
   elements.tabLists.addEventListener('click', () => switchMode('lists'));
 
   // Lists mode
@@ -153,6 +176,21 @@ function setupEventListeners() {
   elements.btnGotoHome.addEventListener('click', () => {
     chrome.tabs.update({ url: 'https://www.youtube.com/' });
   });
+  elements.btnGotoHistory.addEventListener('click', () => {
+    chrome.tabs.update({ url: 'https://www.youtube.com/feed/history' });
+  });
+
+  // History mode
+  elements.btnScanHistory.addEventListener('click', scanWatchHistory);
+  elements.btnHistorySearch.addEventListener('click', filterHistoryBySearch);
+  elements.btnSelectMatchingHistory.addEventListener('click', selectMatchingHistory);
+  elements.historySearchInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') filterHistoryBySearch();
+  });
+  elements.btnRemoveHistory.addEventListener('click', startRemoveHistory);
+  elements.btnSelectGamingHistory.addEventListener('click', selectGamingHistory);
+  elements.btnSelectAllHistory.addEventListener('click', selectAllHistory);
+  elements.btnSelectNoneHistory.addEventListener('click', selectNoneHistory);
 
   // Recommendations mode
   elements.btnScanHome.addEventListener('click', scanHomepageForGaming);
@@ -177,21 +215,26 @@ function switchMode(mode) {
   // Update tabs
   elements.tabSubscriptions.classList.toggle('active', mode === 'subscriptions');
   elements.tabRecommendations.classList.toggle('active', mode === 'recommendations');
+  elements.tabHistory.classList.toggle('active', mode === 'history');
   elements.tabLists.classList.toggle('active', mode === 'lists');
 
   // Show/hide mode sections
   elements.subscriptionsMode.classList.toggle('hidden', mode !== 'subscriptions');
   elements.recommendationsMode.classList.toggle('hidden', mode !== 'recommendations');
+  elements.historyMode.classList.toggle('hidden', mode !== 'history');
   elements.listsMode.classList.toggle('hidden', mode !== 'lists');
 
   // Update status message and which "take me there" link shows
   elements.btnGotoSubs.classList.toggle('hidden', mode !== 'subscriptions');
   elements.btnGotoHome.classList.toggle('hidden', mode !== 'recommendations');
+  elements.btnGotoHistory.classList.toggle('hidden', mode !== 'history');
 
   if (mode === 'subscriptions') {
     setStatus('Go to youtube.com/feed/channels and click the "Load Subscriptions" button below', 'info');
   } else if (mode === 'recommendations') {
     setStatus('Go to youtube.com homepage and click the "Scan Homepage" button below', 'info');
+  } else if (mode === 'history') {
+    setStatus('Go to youtube.com/feed/history and click the "Scan Watch History" button below', 'info');
   } else {
     fillListsView();
     setStatus('Lists are read-only here. Edit on GitHub, then Refresh.', 'info');
@@ -1210,6 +1253,361 @@ async function batchBlockDriver(targets) {
 }
 
 // ============================================
+// HISTORY MODE
+// ============================================
+async function scanWatchHistory() {
+  setStatus('Scanning watch history (auto-scrolling to load more)...', 'info');
+  elements.btnScanHistory.disabled = true;
+  elements.btnScanHistory.innerHTML = '<span class="loading"></span> Scanning...';
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab.url.includes('youtube.com/feed/history')) {
+      throw new Error('Please go to youtube.com/feed/history first');
+    }
+
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: scanHistoryVideos,
+      args: [gamingChannelsList, miscChannelsList]
+    });
+
+    if (results && results[0] && results[0].result) {
+      historyVideos = results[0].result;
+
+      if (historyVideos.length === 0) {
+        setStatus('No history videos found. Watch history may be paused or empty.', 'info');
+        elements.historyVideosSection.classList.add('hidden');
+        elements.historyActionSection.classList.add('hidden');
+      } else {
+        // Pre-select only videos from channels on the lists
+        const blocked = historyVideos.filter(v => v.isBlocked);
+        selectedHistory = new Set(blocked.map(v => v.id));
+        renderHistoryVideos();
+        elements.historyVideosSection.classList.remove('hidden');
+        elements.historyActionSection.classList.remove('hidden');
+        updateHistoryCounts();
+        setStatus(`Found ${historyVideos.length} videos (${blocked.length} from listed channels)`, 'success');
+      }
+    } else {
+      throw new Error('Could not scan history. Make sure you\'re on the watch history page.');
+    }
+  } catch (error) {
+    setStatus(error.message, 'error');
+  } finally {
+    elements.btnScanHistory.disabled = false;
+    elements.btnScanHistory.innerHTML = '🔍 Scan Watch History';
+  }
+}
+
+// Injected into /feed/history. Auto-scrolls (capped), then collects each
+// history video with its channel so we can match against the block lists.
+async function scanHistoryVideos(gamingList, miscList) {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // Watch history can be years long - cap the scroll hard
+  let lastCount = 0;
+  let stableRounds = 0;
+  for (let i = 0; i < 10 && stableRounds < 2; i++) {
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    await sleep(900);
+    const count = document.querySelectorAll('ytd-video-renderer').length;
+    if (count >= 400) break;
+    if (count === lastCount) {
+      stableRounds++;
+    } else {
+      stableRounds = 0;
+      lastCount = count;
+    }
+  }
+  window.scrollTo(0, 0);
+
+  const items = document.querySelectorAll('ytd-video-renderer');
+  const videos = [];
+  let id = 0;
+
+  items.forEach(el => {
+    const titleEl = el.querySelector('#video-title, a#video-title-link');
+    const videoTitle = titleEl ? titleEl.textContent.trim() : '';
+    const titleHref = titleEl ? (titleEl.getAttribute('href') || '') : '';
+    const vidMatch = titleHref.match(/[?&]v=([^&]+)/);
+    const videoId = vidMatch ? vidMatch[1] : '';
+
+    // Channel link (has /@handle)
+    let channelName = '';
+    let channelHandle = '';
+    const chLink = el.querySelector('ytd-channel-name a, #channel-name a, a[href*="/@"]');
+    if (chLink) {
+      channelName = chLink.textContent.trim();
+      const hm = (chLink.getAttribute('href') || '').match(/@([^\/\?]+)/);
+      if (hm) channelHandle = hm[1];
+    }
+
+    if (!videoTitle && !channelName) return;
+
+    const nameLower = channelName.toLowerCase();
+    const handleLower = channelHandle.toLowerCase();
+    const isGaming = gamingList.some(gc => nameLower === gc || handleLower === gc);
+    const isMisc = miscList.some(mc => nameLower === mc || handleLower === mc);
+
+    const thumbEl = el.querySelector('img');
+    videos.push({
+      id: id++,
+      videoId,
+      videoTitle,
+      channelName,
+      channelHandle,
+      thumbnail: thumbEl ? thumbEl.src : '',
+      isGaming,
+      isMisc,
+      isBlocked: isGaming || isMisc
+    });
+  });
+
+  return videos;
+}
+
+function renderHistoryVideos() {
+  elements.historyList.innerHTML = '';
+
+  historyVideos.forEach(video => {
+    const div = document.createElement('div');
+    div.className = `channel-item${video.isBlocked ? ' gaming' : ''}`;
+    div.dataset.id = video.id;
+    div.dataset.search = `${video.channelName} ${video.channelHandle || ''} ${video.videoTitle || ''}`.toLowerCase();
+
+    let tagHtml = '';
+    if (video.isGaming) tagHtml += '<span class="channel-tag gaming">Gaming</span>';
+    if (video.isMisc) tagHtml += '<span class="channel-tag misc">Misc</span>';
+
+    div.innerHTML = `
+      <input type="checkbox" class="channel-checkbox" data-id="${video.id}"
+        ${selectedHistory.has(video.id) ? 'checked' : ''}>
+      <img class="channel-avatar" alt="">
+      <div class="channel-info">
+        <span class="channel-name">${escapeHtml(video.channelName || 'Unknown channel')}${tagHtml}</span>
+        <span class="video-title">${escapeHtml(video.videoTitle.substring(0, 50))}${video.videoTitle.length > 50 ? '...' : ''}</span>
+      </div>
+    `;
+
+    const img = div.querySelector('.channel-avatar');
+    if (video.thumbnail) img.src = video.thumbnail;
+    img.addEventListener('error', () => { img.style.display = 'none'; });
+
+    const checkbox = div.querySelector('.channel-checkbox');
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) selectedHistory.add(video.id);
+      else selectedHistory.delete(video.id);
+      updateHistoryCounts();
+    });
+
+    div.addEventListener('click', (e) => {
+      if (e.target !== checkbox) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
+      }
+    });
+
+    elements.historyList.appendChild(div);
+  });
+}
+
+function updateHistoryCounts() {
+  const gamingTagged = historyVideos.filter(v => v.isGaming).length;
+  const miscTagged = historyVideos.filter(v => v.isMisc).length;
+
+  elements.historyFoundCount.textContent = `${historyVideos.length} videos`;
+  elements.historySelectedCount.textContent = `${selectedHistory.size} selected`;
+
+  if (gamingTagged + miscTagged > 0) {
+    elements.historyGamingCount.textContent = `${gamingTagged} gaming, ${miscTagged} misc`;
+    elements.historyGamingCount.classList.remove('hidden');
+  } else {
+    elements.historyGamingCount.classList.add('hidden');
+  }
+
+  elements.btnRemoveHistory.textContent = `🗑️ Remove from Watch History (${selectedHistory.size})`;
+  elements.btnRemoveHistory.disabled = selectedHistory.size === 0;
+}
+
+function filterHistoryBySearch() {
+  const query = elements.historySearchInput.value.toLowerCase().trim();
+  document.querySelectorAll('#history-list .channel-item').forEach(item => {
+    item.classList.toggle('filtered-out', query && !item.dataset.search.includes(query));
+  });
+}
+
+function selectMatchingHistory() {
+  const query = elements.historySearchInput.value.toLowerCase().trim();
+  if (!query || historyVideos.length === 0) return;
+
+  const matches = historyVideos.filter(v =>
+    `${v.channelName} ${v.channelHandle || ''} ${v.videoTitle || ''}`.toLowerCase().includes(query)
+  );
+  matches.forEach(v => selectedHistory.add(v.id));
+
+  document.querySelectorAll('#history-list .channel-checkbox').forEach(cb => {
+    cb.checked = selectedHistory.has(parseInt(cb.dataset.id));
+  });
+
+  updateHistoryCounts();
+  setStatus(`"${query}": ${matches.length} match(es) added — ${selectedHistory.size} selected total`, matches.length ? 'success' : 'info');
+}
+
+function selectGamingHistory() {
+  selectedHistory.clear();
+  historyVideos.forEach(v => { if (v.isBlocked) selectedHistory.add(v.id); });
+  document.querySelectorAll('#history-list .channel-checkbox').forEach(cb => {
+    cb.checked = selectedHistory.has(parseInt(cb.dataset.id));
+  });
+  updateHistoryCounts();
+  const count = historyVideos.filter(v => v.isBlocked).length;
+  setStatus(`Selected ${count} videos from listed channels`, 'info');
+}
+
+function selectAllHistory() {
+  historyVideos.forEach(v => selectedHistory.add(v.id));
+  document.querySelectorAll('#history-list .channel-checkbox').forEach(cb => { cb.checked = true; });
+  updateHistoryCounts();
+}
+
+function selectNoneHistory() {
+  selectedHistory.clear();
+  document.querySelectorAll('#history-list .channel-checkbox').forEach(cb => { cb.checked = false; });
+  updateHistoryCounts();
+}
+
+async function startRemoveHistory() {
+  if (selectedHistory.size === 0) return;
+
+  if (!confirm(`Remove ${selectedHistory.size} video(s) from watch history?`)) return;
+
+  const targets = Array.from(selectedHistory)
+    .map(id => historyVideos.find(v => v.id === id))
+    .filter(Boolean)
+    .map(v => ({ videoId: v.videoId, title: v.videoTitle, channel: v.channelName }));
+
+  isRunning = true;
+  hideAllSections();
+  elements.progressSection.classList.remove('hidden');
+  elements.btnStop.disabled = false;
+  elements.btnStop.textContent = '⏹️ Stop';
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  await chrome.storage.local.set({
+    ykm_stop: false,
+    ykm_progress: { action: 'history', state: 'running', total: targets.length, done: 0, results: [] }
+  });
+
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: batchRemoveHistoryDriver,
+    args: [targets]
+  }).catch(err => setStatus(`Could not start: ${err.message}`, 'error'));
+
+  watchProgress();
+}
+
+// Injected into /feed/history. Removes each selected video from watch
+// history, reporting progress through chrome.storage.local.
+async function batchRemoveHistoryDriver(targets) {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const visible = el => el && el.offsetParent !== null;
+
+  async function pollFor(fn, timeout = 5000, interval = 150) {
+    const end = Date.now() + timeout;
+    while (Date.now() < end) {
+      const result = fn();
+      if (result) return result;
+      await sleep(interval);
+    }
+    return null;
+  }
+
+  async function report(patch) {
+    const { ykm_progress } = await chrome.storage.local.get('ykm_progress');
+    await chrome.storage.local.set({ ykm_progress: { ...(ykm_progress || {}), ...patch } });
+  }
+
+  // Find the history row for a target by video id (preferred) or exact title
+  function findRow(t) {
+    const rows = document.querySelectorAll('ytd-video-renderer');
+    for (const el of rows) {
+      if (!visible(el)) continue;
+      const titleEl = el.querySelector('#video-title, a#video-title-link');
+      if (!titleEl) continue;
+      const href = titleEl.getAttribute('href') || '';
+      if (t.videoId && href.includes('v=' + t.videoId)) return el;
+      if (!t.videoId && titleEl.textContent.trim() === t.title) return el;
+    }
+    return null;
+  }
+
+  async function removeOne(t) {
+    const row = findRow(t);
+    if (!row) return { ok: false, reason: 'video not found (may already be removed)' };
+    row.scrollIntoView({ behavior: 'instant', block: 'center' });
+
+    // Primary path: direct "Remove from watch history" button on the row
+    let removeBtn = [...row.querySelectorAll('button')]
+      .find(b => visible(b) && (b.getAttribute('aria-label') || '').toLowerCase().startsWith('remove from watch history'));
+
+    if (removeBtn) {
+      removeBtn.click();
+    } else {
+      // Fallback: 3-dot action menu -> "Remove from watch history"
+      const menuBtn = row.querySelector('button[aria-label="Action menu"]') ||
+                      row.querySelector('ytd-menu-renderer button') ||
+                      row.querySelector('button[aria-label="More actions"]');
+      if (!menuBtn) return { ok: false, reason: 'no remove or menu button found' };
+      menuBtn.click();
+
+      const item = await pollFor(() => {
+        const menuItems = document.querySelectorAll('ytd-menu-service-item-renderer, tp-yt-paper-item, [role="menuitem"]');
+        for (const mi of menuItems) {
+          if (visible(mi) && mi.textContent.toLowerCase().includes('remove from watch history')) return mi;
+        }
+        return null;
+      }, 4000);
+      if (!item) { document.body.click(); return { ok: false, reason: '"Remove from watch history" not in menu' }; }
+      item.click();
+    }
+
+    // Verify: the row is gone from the DOM
+    const gone = await pollFor(() => (findRow(t) ? null : true), 4000);
+    return gone ? { ok: true, reason: '' } : { ok: false, reason: 'clicked but row still present' };
+  }
+
+  const results = [];
+  for (let i = 0; i < targets.length; i++) {
+    const { ykm_stop } = await chrome.storage.local.get('ykm_stop');
+    if (ykm_stop) {
+      await report({ state: 'stopped', results });
+      return results;
+    }
+
+    const t = targets[i];
+    const label = t.title || t.channel || 'video';
+    await report({ done: i, current: label });
+
+    let outcome;
+    try {
+      outcome = await removeOne(t);
+    } catch (e) {
+      outcome = { ok: false, reason: e.message };
+    }
+    results.push({ name: label, ok: outcome.ok, reason: outcome.reason });
+    await report({ done: i + 1, results });
+    await sleep(700);
+  }
+
+  await report({ state: 'finished', done: targets.length, results });
+  return results;
+}
+
+// ============================================
 // CHANNEL SUGGESTIONS (GitHub issue + Action pipeline)
 // ============================================
 const GITHUB_REPO_URL = 'https://github.com/ObscureAintSecure/youtube-kids-manager';
@@ -1257,6 +1655,8 @@ function hideAllSections() {
   elements.actionSection.classList.add('hidden');
   elements.foundVideosSection.classList.add('hidden');
   elements.blockActionSection.classList.add('hidden');
+  elements.historyVideosSection.classList.add('hidden');
+  elements.historyActionSection.classList.add('hidden');
   elements.resultsSection.classList.add('hidden');
 }
 
@@ -1309,7 +1709,9 @@ function renderBatchResults(p) {
   const results = p.results || [];
   const ok = results.filter(r => r.ok);
   const failed = results.filter(r => !r.ok);
-  const actionWord = p.action === 'unsubscribe' ? 'unsubscribed' : 'blocked';
+  const actionWord = p.action === 'unsubscribe' ? 'unsubscribed'
+    : p.action === 'history' ? 'removed from history'
+    : 'blocked';
 
   let html = `<p class="success">✅ Successfully ${actionWord}: ${ok.length}</p>`;
   if (failed.length > 0) {
@@ -1334,11 +1736,14 @@ function resetUI() {
     elements.filterSection.classList.remove('hidden');
     elements.channelsSection.classList.remove('hidden');
     elements.actionSection.classList.remove('hidden');
-  } else {
+  } else if (currentMode === 'history') {
+    elements.historyVideosSection.classList.remove('hidden');
+    elements.historyActionSection.classList.remove('hidden');
+  } else if (currentMode === 'recommendations') {
     elements.foundVideosSection.classList.remove('hidden');
     elements.blockActionSection.classList.remove('hidden');
   }
-  
+
   setStatus('Ready', 'info');
 }
 

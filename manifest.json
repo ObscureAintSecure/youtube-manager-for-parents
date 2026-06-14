@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Manager for Parents",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Help parents manage YouTube subscriptions for their kids - bulk unsubscribe and block unwanted channels from recommendations",
   "permissions": [
     "activeTab",
