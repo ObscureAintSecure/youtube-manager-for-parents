@@ -1,161 +1,96 @@
 # YouTube Manager for Parents
 
-A Chrome extension to help parents manage their children's YouTube experience. Bulk unsubscribe from gaming channels and block them from recommendations.
+A Chrome extension that helps parents clean up a child's YouTube account in bulk and point it toward better content. Prune subscriptions, recommendations, and watch history, and subscribe to a shared list of good channels.
 
-## Features
+(Formerly "YouTube Kids Manager".)
 
-### Subscriptions Mode
-- **Load all subscriptions** from any YouTube account
-- **Gaming channel detection** using keyword matching + curated list of 600+ channels
-- **Search and filter** channels by name
-- **Bulk select/deselect** channels
-- **One-click unsubscribe** from selected channels
+## What it does
 
-### Recommendations Mode (NEW)
-- **Scan YouTube homepage** for gaming videos
-- **Auto-detect gaming channels** in recommendations
-- **Block channels from recommendations** using YouTube's "Don't recommend channel" feature
-- **Undo available** via myactivity.google.com → Other activity → YouTube "Not interested" feedback
+The popup has four tabs:
 
-### General
-- **Progress tracking** with ability to stop mid-process
-- **Survives popup close** - bulk actions run in the page; closing the popup doesn't stop them. Reopen the popup to see progress.
-- **Per-channel results** - failed channels are listed by name with a reason
-- **Auto-scroll on load** - Load Subscriptions scrolls the page automatically to capture every subscription, not just the visible ones
-- **Parent-friendly interface** - simple tabs, clear actions
+### 🚫 Clean Up Recommendations
+- Scans the YouTube homepage (auto-scrolls to load more)
+- Channels on your block lists are pre-selected; add others by keyword or by hand
+- Applies YouTube's "Don't recommend channel" to the channels you pick
+- Undo via myactivity.google.com → Other Google activity → YouTube "Not interested" feedback → Delete (note: this resets all such feedback, not individual ones)
+
+### 📋 Clean Up Subscriptions
+- Loads the full subscription list (auto-scrolls to capture every channel, not just visible ones)
+- Select channels by block-list match, by keyword (name, handle, or description), or with "Select Bottom N" to prune the least-watched (sort the page by "Most relevant" first)
+- One-click bulk unsubscribe
+
+### 🕓 Clean Up History
+- Scans watch history (auto-scroll, capped) for videos from channels on your block lists
+- Removes selected videos from history, which helps retrain what YouTube recommends
+
+### 🌟 For Kids
+- A shared list of good channels to consider for your kids
+- "Check If Subscribed" marks which ones the account already follows
+- Open any channel to preview, then subscribe to the ones you select
+
+### Throughout
+- **Progress + per-item results** - failed items are listed with a reason
+- **Survives popup close** - the unsubscribe, block, and history batches run in the page; closing the popup doesn't stop them (subscribing must keep the popup open, since it navigates between channel pages)
+- **Stop button** to halt mid-run
+
+## Channel lists
+
+Detection is list-based and exact-match: a channel is flagged only when its name or @handle exactly equals an entry on a list (case-insensitive). No keyword or partial matching, to avoid false positives on destructive actions.
+
+Three lists, all managed on GitHub under `lists/`:
+- `gaming-channels.txt` - gaming channels (Gaming tag)
+- `misc-channels.txt` - other blocked channels (Misc tag)
+- `recommended-channels.txt` - good channels for the For Kids tab
+
+The extension pulls the latest lists from GitHub each time the popup opens, with a local cache fallback if GitHub is unreachable. The footer "View Lists" panel shows counts, sync status, and links to each list on GitHub.
+
+### Suggesting channels
+
+You don't edit lists in the extension. Instead:
+- **Block lists**: in Clean Up Subscriptions or Recommendations, select channels and click "Suggest Selected for Shared Block Lists"
+- **Good channels**: in Clean Up Subscriptions, select channels and click "Suggest Selected as Good Channels for Kids"
+
+Each opens a prefilled GitHub issue. The maintainer adds the `approved` label, and a GitHub Action appends the channels to the right list (deduped, sorted) and closes the issue. Every install picks up the change on its next refresh.
 
 ## Installation
 
-### From Source (Developer Mode)
-
+### From source (developer mode)
 1. Download or clone this repository
 2. Open Chrome and go to `chrome://extensions/`
-3. Enable **Developer mode** (toggle in top right)
-4. Click **Load unpacked**
-5. Select the `youtube-manager-for-parents` folder
-6. The extension icon should appear in your toolbar
+3. Enable **Developer mode** (top right)
+4. Click **Load unpacked** and select the `youtube-manager-for-parents` folder
 
-## Usage
+The kid's profile is typically a Family Link supervised account, which blocks unpacked/off-store installs. For that, publish/install via the Chrome Web Store (unlisted) instead.
 
-### Unsubscribing from Channels
+## Usage notes
 
-1. **Log into your child's YouTube account** in Chrome
-2. Go to YouTube's subscription page: `https://www.youtube.com/feed/channels`
-3. **Click the extension icon** in your toolbar
-4. Make sure **Subscriptions** tab is selected
-5. Click **Load Subscriptions**
-6. Use the tools to select channels:
-   - **Detect Gaming** - auto-selects gaming channels
-   - **Search** - filter by name
-   - **All / None** - bulk selection
-7. Click **Unsubscribe Selected**
+- Log into the child's YouTube account in the browser you run this from
+- Each tab has a "Take me to..." link to the right YouTube page
+- Run a small selection first to confirm everything works before a large batch
 
-### Blocking Channels from Recommendations
+## Privacy
 
-1. **Log into your child's YouTube account** in Chrome
-2. Go to YouTube homepage: `https://www.youtube.com`
-3. **Scroll down** to load more video recommendations
-4. **Click the extension icon** in your toolbar
-5. Select the **Recommendations** tab
-6. Click **Scan Homepage for Gaming**
-7. Review detected channels (uncheck any you want to keep)
-8. Click **Block Selected Channels**
-
-### Undoing Blocked Recommendations
-
-To undo "Don't recommend channel" for all channels:
-1. Go to https://myactivity.google.com
-2. Click "Other Google activity" in the left menu
-3. Find "YouTube 'Not interested' feedback"
-4. Click "Delete"
-
-Note: This resets ALL your "don't recommend" choices, not individual ones.
-
-## Channel Lists
-
-Detection is list-based only. A channel is flagged when its name or @handle exactly matches an entry in `lists/gaming-channels.txt` or `lists/misc-channels.txt` (case-insensitive). There is no keyword or partial matching - this avoids false positives on a destructive action.
-
-Edit `lists/gaming-channels.txt` to add known gaming channels:
-
-```
-# Add one channel name or @handle per line (without the @)
-pewdiepie
-markiplier
-```
-
-The list supports:
-- One channel name or handle per line
-- Case-insensitive exact matching
-- Comments starting with `#`
-
-## Customizing the Gaming List
-
-To add more channels to the gaming detection:
-
-1. Open `lists/gaming-channels.txt`
-2. Add channel names, one per line
-3. Save the file
-4. Reload the extension in `chrome://extensions/`
-
-### Future: Remote List Updates
-
-You can host the `gaming-channels.txt` file on GitHub and modify the extension to fetch updates. This allows maintaining a community-curated list.
-
-## Project Structure
-
-```
-youtube-manager-for-parents/
-├── manifest.json          # Chrome extension manifest
-├── popup.html             # Extension popup UI
-├── popup.css              # Styles
-├── popup.js               # Main logic
-├── lists/
-│   └── gaming-channels.txt  # Curated gaming channels
-├── icons/
-│   ├── icon16.png
-│   ├── icon48.png
-│   └── icon128.png
-└── README.md
-```
+- No personal data is collected, and none is sent anywhere
+- The only network request is fetching the public channel lists from GitHub
+- All actions are performed by clicking YouTube's own controls in your tab, only when you click a button in the popup
+- Uses your existing YouTube session; no separate login or API key
 
 ## Troubleshooting
 
-### "No subscriptions found"
-- Make sure you're on `youtube.com/feed/channels`
-- Make sure you're logged into the correct YouTube account
-- Try refreshing the YouTube page
-
-### Unsubscribe not working
-- YouTube may have changed their UI
-- Try refreshing the page and running again
-- Check the browser console for errors
-
-### Extension not detecting gaming channels
-- Add the channel name to `lists/gaming-channels.txt`
-- Check for typos in the channel name
-
-## Privacy & Security
-
-- **No data collection** - Everything runs locally
-- **No external requests** - The extension only interacts with YouTube
-- **No authentication required** - Uses your existing YouTube session
-- **Open source** - Review the code yourself
+- **Nothing found when scanning**: make sure you're on the right page (the tab tells you which) and logged into the correct account; refresh and try again
+- **An action fails**: YouTube changes its page structure periodically; the per-item result log shows the reason. Open an issue with the detail
+- **List changes not showing**: click Refresh in the View Lists panel; GitHub's CDN can lag a few minutes
 
 ## Disclaimer
 
-- This tool performs real unsubscribe actions that **cannot be undone**
-- Always double-check your selections before unsubscribing
-- YouTube's UI may change, which could affect functionality
+- Unsubscribe and history removal are real actions; double-check selections first
+- YouTube's UI changes over time and may break selectors until updated
 - Use at your own risk
 
 ## License
 
-MIT License - Feel free to modify and distribute.
+MIT License.
 
 ## Contributing
 
-1. Fork the repository
-2. Add new gaming channels to the list
-3. Submit a pull request
-
-Suggestions for gaming channels to add are welcome!
+Use the in-extension "Suggest" buttons to nominate channels, or open an issue / pull request. Suggestions for good kids channels and block-list additions are welcome.
