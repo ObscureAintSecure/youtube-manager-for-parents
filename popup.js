@@ -49,8 +49,10 @@ function initElements() {
   // Lists mode
   elements.linkViewGaming = document.getElementById('link-view-gaming');
   elements.linkViewMisc = document.getElementById('link-view-misc');
+  elements.linkViewRecLists = document.getElementById('link-view-rec-lists');
   elements.gamingListCount = document.getElementById('gaming-list-count');
   elements.miscListCount = document.getElementById('misc-list-count');
+  elements.recListCount = document.getElementById('rec-list-count');
   elements.btnRefreshLists = document.getElementById('btn-refresh-lists');
   elements.listsSyncStatus = document.getElementById('lists-sync-status');
   
@@ -382,6 +384,7 @@ function fillListsView(errorNote) {
   const blobBase = 'https://github.com/ObscureAintSecure/youtube-kids-manager/blob/main/lists/';
   elements.linkViewGaming.href = blobBase + 'gaming-channels.txt';
   elements.linkViewMisc.href = blobBase + 'misc-channels.txt';
+  elements.linkViewRecLists.href = blobBase + 'recommended-channels.txt';
   if (errorNote) {
     const cached = listsFetchedAt ? `cached copy from ${new Date(listsFetchedAt).toLocaleString()}` : 'bundled copy';
     elements.listsSyncStatus.textContent = `${errorNote} — using ${cached}`;
@@ -395,6 +398,7 @@ function fillListsView(errorNote) {
 function updateListCounts() {
   elements.gamingListCount.textContent = `(${gamingChannelsList.length} entries)`;
   elements.miscListCount.textContent = `(${miscChannelsList.length} entries)`;
+  elements.recListCount.textContent = `(${recommendedHandles.length} entries)`;
 }
 
 // Re-apply list matching to whatever is already loaded in either mode
