@@ -12,6 +12,9 @@ let gamingChannelsList = [];
 let miscChannelsList = [];
 let gamingListText = '';
 let miscListText = '';
+let recommendedListText = '';
+let recommendedHandles = [];
+let selectedDiscover = new Set();
 let listsFetchedAt = null;
 let isRunning = false;
 let currentMode = 'subscriptions';
@@ -26,11 +29,22 @@ function initElements() {
   elements.tabSubscriptions = document.getElementById('tab-subscriptions');
   elements.tabRecommendations = document.getElementById('tab-recommendations');
   elements.tabHistory = document.getElementById('tab-history');
+  elements.tabDiscover = document.getElementById('tab-discover');
   elements.tabLists = document.getElementById('tab-lists');
   elements.subscriptionsMode = document.getElementById('subscriptions-mode');
   elements.recommendationsMode = document.getElementById('recommendations-mode');
   elements.historyMode = document.getElementById('history-mode');
+  elements.discoverMode = document.getElementById('discover-mode');
   elements.listsMode = document.getElementById('lists-mode');
+
+  // Discover (For Kids) mode
+  elements.btnSelectAllDiscover = document.getElementById('btn-select-all-discover');
+  elements.btnSelectNoneDiscover = document.getElementById('btn-select-none-discover');
+  elements.discoverFoundCount = document.getElementById('discover-found-count');
+  elements.discoverSelectedCount = document.getElementById('discover-selected-count');
+  elements.discoverList = document.getElementById('discover-list');
+  elements.btnSubscribeDiscover = document.getElementById('btn-subscribe-discover');
+  elements.btnSuggestDiscover = document.getElementById('btn-suggest-discover');
 
   // Lists mode
   elements.linkViewGaming = document.getElementById('link-view-gaming');
@@ -140,7 +154,20 @@ function setupEventListeners() {
   elements.tabSubscriptions.addEventListener('click', () => switchMode('subscriptions'));
   elements.tabRecommendations.addEventListener('click', () => switchMode('recommendations'));
   elements.tabHistory.addEventListener('click', () => switchMode('history'));
+  elements.tabDiscover.addEventListener('click', () => switchMode('discover'));
   elements.tabLists.addEventListener('click', () => switchMode('lists'));
+
+  // Discover (For Kids) mode
+  elements.btnSelectAllDiscover.addEventListener('click', selectAllDiscover);
+  elements.btnSelectNoneDiscover.addEventListener('click', selectNoneDiscover);
+  elements.btnSubscribeDiscover.addEventListener('click', startSubscribeDiscover);
+  elements.btnSuggestDiscover.addEventListener('click', () => {
+    const picked = Array.from(selectedDiscover)
+      .map(i => recommendedHandles[i])
+      .filter(Boolean)
+      .map(h => ({ name: h, handle: h }));
+    openSuggestionIssue(picked, 'recommended');
+  });
 
   // Lists mode
   elements.btnRefreshLists.addEventListener('click', () => refreshListsFromGitHub(true));
@@ -225,6 +252,7 @@ function switchMode(mode) {
   elements.subscriptionsMode.classList.toggle('hidden', mode !== 'subscriptions');
   elements.recommendationsMode.classList.toggle('hidden', mode !== 'recommendations');
   elements.historyMode.classList.toggle('hidden', mode !== 'history');
+  elements.discoverMode.classList.toggle('hidden', mode !== 'discover');
   elements.listsMode.classList.toggle('hidden', mode !== 'lists');
 
   // Update status message and which "take me there" link shows
@@ -238,6 +266,9 @@ function switchMode(mode) {
     setStatus('Go to youtube.com homepage and click the "Scan Homepage" button below', 'info');
   } else if (mode === 'history') {
     setStatus('Go to youtube.com/feed/history and click the "Scan Watch History" button below', 'info');
+  } else if (mode === 'discover') {
+    renderDiscover();
+    setStatus('Open a channel to preview, then select and subscribe', 'info');
   } else {
     fillListsView();
     setStatus('Lists are read-only here. Edit on GitHub, then Refresh.', 'info');
@@ -255,6 +286,14 @@ function parseList(text) {
   return text
     .split('\n')
     .map(line => line.trim().toLowerCase())
+    .filter(line => line && !line.startsWith('#'));
+}
+
+// Like parseList but keeps original casing (handles for display/URLs)
+function parseListRaw(text) {
+  return text
+    .split('\n')
+    .map(line => line.trim().replace(/^@/, ''))
     .filter(line => line && !line.startsWith('#'));
 }
 
@@ -278,15 +317,24 @@ async function loadChannelLists() {
   if (ykm_lists && typeof ykm_lists.gaming === 'string') {
     gamingListText = ykm_lists.gaming;
     miscListText = ykm_lists.misc || '';
+    recommendedListText = ykm_lists.recommended || '';
     listsFetchedAt = ykm_lists.fetchedAt || null;
   } else {
     gamingListText = await fetchBundledList('gaming-channels.txt');
     miscListText = await fetchBundledList('misc-channels.txt');
+    recommendedListText = await fetchBundledList('recommended-channels.txt');
     listsFetchedAt = null;
   }
 
   gamingChannelsList = parseList(gamingListText);
   miscChannelsList = parseList(miscListText);
+  recommendedHandles = parseListRaw(recommendedListText);
+
+  // Seed recommended list from bundle if storage predates this feature
+  if (!recommendedListText) {
+    recommendedListText = await fetchBundledList('recommended-channels.txt');
+    recommendedHandles = parseListRaw(recommendedListText);
+  }
 }
 
 async function refreshListsFromGitHub(manual = false) {
@@ -294,9 +342,10 @@ async function refreshListsFromGitHub(manual = false) {
   if (manual) setStatus('Fetching lists from GitHub...', 'info');
 
   try {
-    const [gamingRes, miscRes] = await Promise.all([
+    const [gamingRes, miscRes, recRes] = await Promise.all([
       fetch(GITHUB_LISTS_BASE + 'gaming-channels.txt', { cache: 'no-cache' }),
-      fetch(GITHUB_LISTS_BASE + 'misc-channels.txt', { cache: 'no-cache' })
+      fetch(GITHUB_LISTS_BASE + 'misc-channels.txt', { cache: 'no-cache' }),
+      fetch(GITHUB_LISTS_BASE + 'recommended-channels.txt', { cache: 'no-cache' })
     ]);
     if (!gamingRes.ok || !miscRes.ok) {
       throw new Error(`GitHub returned ${gamingRes.ok ? miscRes.status : gamingRes.status}`);
@@ -304,15 +353,18 @@ async function refreshListsFromGitHub(manual = false) {
 
     gamingListText = await gamingRes.text();
     miscListText = await miscRes.text();
+    if (recRes.ok) recommendedListText = await recRes.text();
     listsFetchedAt = Date.now();
     await chrome.storage.local.set({
-      ykm_lists: { gaming: gamingListText, misc: miscListText, fetchedAt: listsFetchedAt }
+      ykm_lists: { gaming: gamingListText, misc: miscListText, recommended: recommendedListText, fetchedAt: listsFetchedAt }
     });
 
     gamingChannelsList = parseList(gamingListText);
     miscChannelsList = parseList(miscListText);
+    recommendedHandles = parseListRaw(recommendedListText);
     retagLoadedData();
     fillListsView();
+    if (currentMode === 'discover') renderDiscover();
     if (manual) {
       setStatus(`Synced: ${gamingChannelsList.length} gaming, ${miscChannelsList.length} misc entries`, 'success');
     }
@@ -1613,6 +1665,173 @@ async function batchRemoveHistoryDriver(targets) {
 }
 
 // ============================================
+// DISCOVER (FOR KIDS) MODE
+// ============================================
+function renderDiscover() {
+  elements.discoverList.innerHTML = '';
+
+  recommendedHandles.forEach((handle, index) => {
+    const div = document.createElement('div');
+    div.className = 'channel-item';
+    div.dataset.id = index;
+
+    div.innerHTML = `
+      <input type="checkbox" class="channel-checkbox" data-id="${index}"
+        ${selectedDiscover.has(index) ? 'checked' : ''}>
+      <div class="channel-info">
+        <span class="channel-name">@${escapeHtml(handle)}</span>
+      </div>
+      <a class="btn-link" href="https://www.youtube.com/@${encodeURIComponent(handle)}" target="_blank" rel="noopener">Open ▶</a>
+    `;
+
+    const checkbox = div.querySelector('.channel-checkbox');
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) selectedDiscover.add(index);
+      else selectedDiscover.delete(index);
+      updateDiscoverCounts();
+    });
+
+    // Clicking the row toggles the checkbox, but not when clicking the Open link
+    div.addEventListener('click', (e) => {
+      if (e.target !== checkbox && e.target.tagName !== 'A') {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
+      }
+    });
+
+    elements.discoverList.appendChild(div);
+  });
+
+  updateDiscoverCounts();
+}
+
+function updateDiscoverCounts() {
+  elements.discoverFoundCount.textContent = `${recommendedHandles.length} channels`;
+  elements.discoverSelectedCount.textContent = `${selectedDiscover.size} selected`;
+
+  elements.btnSubscribeDiscover.textContent = `➕ Subscribe to Selected (${selectedDiscover.size})`;
+  elements.btnSubscribeDiscover.disabled = selectedDiscover.size === 0;
+
+  elements.btnSuggestDiscover.innerHTML =
+    `<span>💡 Suggest a Good Channel for This List</span><span>(${selectedDiscover.size} selected)</span>`;
+  elements.btnSuggestDiscover.disabled = selectedDiscover.size === 0;
+}
+
+function selectAllDiscover() {
+  recommendedHandles.forEach((_, i) => selectedDiscover.add(i));
+  document.querySelectorAll('#discover-list .channel-checkbox').forEach(cb => { cb.checked = true; });
+  updateDiscoverCounts();
+}
+
+function selectNoneDiscover() {
+  selectedDiscover.clear();
+  document.querySelectorAll('#discover-list .channel-checkbox').forEach(cb => { cb.checked = false; });
+  updateDiscoverCounts();
+}
+
+// Subscribing requires being on each channel's page, so this navigates a
+// working tab through the selected channels. Unlike the other batches it
+// cannot survive the popup closing - the popup must stay open.
+async function startSubscribeDiscover() {
+  if (selectedDiscover.size === 0) return;
+
+  const targets = Array.from(selectedDiscover).map(i => recommendedHandles[i]).filter(Boolean);
+  if (!confirm(`Subscribe your account to ${targets.length} channel(s)?`)) return;
+
+  isRunning = true;
+  elements.discoverMode.classList.add('hidden');
+  elements.progressSection.classList.remove('hidden');
+  elements.resultsSection.classList.add('hidden');
+  elements.btnStop.disabled = false;
+  elements.btnStop.textContent = '⏹️ Stop';
+  await chrome.storage.local.set({ ykm_stop: false });
+
+  // A dedicated background tab so the user's current tab is left alone
+  const workTab = await chrome.tabs.create({ url: 'about:blank', active: false });
+  const results = [];
+
+  for (let i = 0; i < targets.length; i++) {
+    const { ykm_stop } = await chrome.storage.local.get('ykm_stop');
+    if (ykm_stop) break;
+
+    const handle = targets[i];
+    updateProgress(i, targets.length, `Subscribing: @${handle}`);
+
+    let outcome;
+    try {
+      await chrome.tabs.update(workTab.id, { url: `https://www.youtube.com/@${handle}` });
+      await waitForTabComplete(workTab.id);
+      const res = await chrome.scripting.executeScript({
+        target: { tabId: workTab.id },
+        func: clickSubscribeOnChannel
+      });
+      outcome = (res && res[0] && res[0].result) || { ok: false, reason: 'no result' };
+    } catch (e) {
+      outcome = { ok: false, reason: e.message };
+    }
+    results.push({ name: '@' + handle, ok: outcome.ok, reason: outcome.reason });
+    updateProgress(i + 1, targets.length, `Subscribing: @${handle}`);
+  }
+
+  try { await chrome.tabs.remove(workTab.id); } catch (e) { /* tab may be gone */ }
+
+  isRunning = false;
+  renderBatchResults({ action: 'subscribe', state: 'finished', results });
+}
+
+function waitForTabComplete(tabId, timeout = 15000) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; chrome.tabs.onUpdated.removeListener(listener); resolve(); } };
+    const listener = (id, info) => { if (id === tabId && info.status === 'complete') finish(); };
+    chrome.tabs.onUpdated.addListener(listener);
+    setTimeout(finish, timeout);
+  });
+}
+
+// Injected into a channel page. Subscribes if not already subscribed.
+async function clickSubscribeOnChannel() {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const visible = el => el && el.offsetParent !== null;
+
+  async function pollFor(fn, timeout = 8000, interval = 200) {
+    const end = Date.now() + timeout;
+    while (Date.now() < end) {
+      const r = fn();
+      if (r) return r;
+      await sleep(interval);
+    }
+    return null;
+  }
+
+  // Wait for the subscribe button area to render
+  const container = await pollFor(() => document.querySelector('ytd-subscribe-button-renderer'));
+  if (!container) return { ok: false, reason: 'subscribe button not found' };
+
+  const btn = container.querySelector('button');
+  const label = (btn?.getAttribute('aria-label') || '').toLowerCase();
+  const text = (btn?.textContent || '').trim().toLowerCase();
+
+  // Already subscribed?
+  if (label.startsWith('unsubscribe') || text === 'subscribed') {
+    return { ok: true, reason: 'already subscribed' };
+  }
+
+  if (!btn) return { ok: false, reason: 'subscribe button missing' };
+  btn.click();
+
+  // Verify it flipped to subscribed
+  const ok = await pollFor(() => {
+    const b = container.querySelector('button');
+    const l = (b?.getAttribute('aria-label') || '').toLowerCase();
+    const t = (b?.textContent || '').trim().toLowerCase();
+    return (l.startsWith('unsubscribe') || t === 'subscribed') ? true : null;
+  }, 5000);
+
+  return ok ? { ok: true, reason: '' } : { ok: false, reason: 'clicked but not confirmed' };
+}
+
+// ============================================
 // CHANNEL SUGGESTIONS (GitHub issue + Action pipeline)
 // ============================================
 const GITHUB_REPO_URL = 'https://github.com/ObscureAintSecure/youtube-kids-manager';
@@ -1621,7 +1840,7 @@ const MAX_SUGGESTIONS_PER_ISSUE = 30;
 // Opens a prefilled GitHub issue suggesting the selected channels for the
 // shared lists. The repo's process-suggestion workflow appends them to the
 // list files once the maintainer adds the "approved" label.
-function openSuggestionIssue(picked) {
+function openSuggestionIssue(picked, target = 'gaming') {
   if (picked.length === 0) {
     setStatus('Select at least one channel first, then click Suggest', 'error');
     return;
@@ -1630,10 +1849,14 @@ function openSuggestionIssue(picked) {
   const capped = picked.slice(0, MAX_SUGGESTIONS_PER_ISSUE);
   const lines = capped.map(c => `- ${c.name}${c.handle ? ` | ${c.handle}` : ''}`).join('\n');
 
+  const hint = target === 'recommended'
+    ? '<!-- These are suggested GOOD channels for the recommended-for-kids list. -->'
+    : '<!-- Change "gaming" to "misc" above if these are not gaming channels. -->';
+
   const body = [
-    'Target list: gaming',
+    `Target list: ${target}`,
     '',
-    '<!-- Change "gaming" to "misc" above if these are not gaming channels. -->',
+    hint,
     '<!-- Remove any lines you did not mean to include. -->',
     '',
     'Channels:',
@@ -1642,7 +1865,7 @@ function openSuggestionIssue(picked) {
     `_Submitted from YouTube Manager for Parents._`
   ].join('\n');
 
-  const title = `Channel suggestion: ${capped.length} channel(s)`;
+  const title = `Channel suggestion (${target}): ${capped.length} channel(s)`;
   const url = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
   chrome.tabs.create({ url });
 
@@ -1716,6 +1939,7 @@ function renderBatchResults(p) {
   const failed = results.filter(r => !r.ok);
   const actionWord = p.action === 'unsubscribe' ? 'unsubscribed'
     : p.action === 'history' ? 'removed from history'
+    : p.action === 'subscribe' ? 'subscribed'
     : 'blocked';
 
   let html = `<p class="success">✅ Successfully ${actionWord}: ${ok.length}</p>`;
@@ -1747,6 +1971,9 @@ function resetUI() {
   } else if (currentMode === 'recommendations') {
     elements.foundVideosSection.classList.remove('hidden');
     elements.blockActionSection.classList.remove('hidden');
+  } else if (currentMode === 'discover') {
+    elements.discoverMode.classList.remove('hidden');
+    renderDiscover();
   }
 
   setStatus('Ready', 'info');

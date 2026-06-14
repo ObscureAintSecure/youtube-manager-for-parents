@@ -1,0 +1,21 @@
+# YouTube Manager for Parents - Recommended Channels for Kids
+# =============================================
+# Good channels to consider subscribing your kids to.
+# One channel handle per line (without @). # for comments.
+# =============================================
+
+bravewilderness
+carshoorts
+CleoAbram
+crashcoursekids
+DailyDoseOfInternet
+davidmalawey
+kurzgesagt
+outdoorboys
+physicsgirl
+SciShowKids
+TheBackyardScientist
+thebrainscoop
+TheWhyFiles
+veritasium
+WestenChamplin

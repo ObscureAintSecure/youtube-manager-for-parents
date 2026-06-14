@@ -28,10 +28,15 @@ jobs:
             const fs = require('fs');
             const body = context.payload.issue.body || '';
 
-            // Target list: "gaming" (default) or "misc"
-            const targetMatch = body.match(/target list:\s*(gaming|misc)/i);
+            // Target list: "gaming" (default), "misc", or "recommended"
+            const targetMatch = body.match(/target list:\s*(gaming|misc|recommended)/i);
             const target = targetMatch ? targetMatch[1].toLowerCase() : 'gaming';
-            const file = target === 'misc' ? 'lists/misc-channels.txt' : 'lists/gaming-channels.txt';
+            const fileByTarget = {
+              gaming: 'lists/gaming-channels.txt',
+              misc: 'lists/misc-channels.txt',
+              recommended: 'lists/recommended-channels.txt'
+            };
+            const file = fileByTarget[target];
 
             // Channel lines look like "- Name | handle" or "- Name".
             // Prefer the handle (stable across renames) when present.

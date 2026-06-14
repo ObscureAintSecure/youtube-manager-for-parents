@@ -10,8 +10,8 @@ body {
   line-height: 1.5;
   color: #333;
   background: #f5f5f5;
-  min-width: 400px;
-  max-width: 450px;
+  min-width: 500px;
+  max-width: 560px;
 }
 
 .container {
@@ -171,19 +171,22 @@ header h1 {
 /* Mode Tabs */
 .mode-tabs {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .tab-btn {
   flex: 1;
-  padding: 10px 12px;
+  min-width: 90px;
+  padding: 9px 8px;
   border: 2px solid #e0e0e0;
   background: white;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .tab-btn:hover {

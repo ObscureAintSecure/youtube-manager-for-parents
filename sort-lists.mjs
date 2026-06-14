@@ -2,7 +2,7 @@
 // "# Total channels: N" count refreshed. Same logic as the workflow.
 import fs from 'fs';
 
-for (const f of ['lists/gaming-channels.txt', 'lists/misc-channels.txt']) {
+for (const f of ['lists/gaming-channels.txt', 'lists/misc-channels.txt', 'lists/recommended-channels.txt']) {
   const content = fs.readFileSync(f, 'utf8');
   const comments = [];
   const entryMap = new Map();

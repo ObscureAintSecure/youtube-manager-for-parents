@@ -19,6 +19,7 @@
         <button id="tab-recommendations" class="tab-btn active">🚫 Recommendations</button>
         <button id="tab-subscriptions" class="tab-btn">📋 Subscriptions</button>
         <button id="tab-history" class="tab-btn">🕓 History</button>
+        <button id="tab-discover" class="tab-btn">🌟 For Kids</button>
         <button id="tab-lists" class="tab-btn">📝 Lists</button>
       </div>
     </section>
@@ -196,6 +197,39 @@
         <p class="help-text">
           Removes each selected video from your watch history. This affects history only;
           it does not unsubscribe or change recommendations directly.
+        </p>
+      </section>
+    </div>
+
+    <!-- ========== DISCOVER (FOR KIDS) MODE ========== -->
+    <div id="discover-mode" class="hidden">
+      <section class="section">
+        <p class="mode-description">
+          A shared list of good channels to consider for your kids. Open any channel to look first,
+          then select the ones you want and subscribe. Channels your account already follows are marked.
+        </p>
+        <div class="filter-buttons">
+          <button id="btn-select-all-discover" class="btn btn-secondary">All</button>
+          <button id="btn-select-none-discover" class="btn btn-secondary">None</button>
+        </div>
+        <div class="stats-row">
+          <span id="discover-found-count">0 channels</span>
+          <span id="discover-selected-count">0 selected</span>
+        </div>
+        <div id="discover-list" class="channel-list">
+          <!-- Recommended channels populated here -->
+        </div>
+        <button id="btn-subscribe-discover" class="btn btn-primary btn-large" style="margin-top: 10px;" disabled>
+          ➕ Subscribe to Selected (0)
+        </button>
+        <p class="help-text">
+          Subscribing opens each channel in a tab and follows it. Keep this popup open until it finishes.
+        </p>
+        <button id="btn-suggest-discover" class="btn btn-secondary btn-large btn-twoline" style="margin-top: 8px;" disabled>
+          <span>💡 Suggest a Good Channel for This List</span><span>(0 selected)</span>
+        </button>
+        <p class="help-text">
+          Know a great kids channel? Select it above and suggest it for the shared list (developer approves).
         </p>
       </section>
     </div>
