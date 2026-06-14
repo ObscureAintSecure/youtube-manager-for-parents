@@ -122,13 +122,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   switchMode('recommendations');
   refreshListsFromGitHub(); // pull latest lists in the background
 
-  // If a batch is running (or finished while popup was closed), reattach
+  // Reattach only to a still-running batch. A finished/stopped batch's
+  // leftover state is cleared so the popup always opens on Recommendations.
   const { ykm_progress } = await chrome.storage.local.get('ykm_progress');
-  if (ykm_progress) {
+  if (ykm_progress && ykm_progress.state === 'running') {
     if (ykm_progress.action === 'unsubscribe') switchMode('subscriptions');
     else if (ykm_progress.action === 'history') switchMode('history');
     hideAllSections();
     watchProgress();
+  } else if (ykm_progress) {
+    chrome.storage.local.remove(['ykm_progress', 'ykm_stop']);
   }
 });
 
