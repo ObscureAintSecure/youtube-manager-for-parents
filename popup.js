@@ -1331,7 +1331,9 @@ async function scanHistoryVideos(gamingList, miscList) {
     // Skip playlist/mix collections
     if (el.querySelector('[class*="CollectionStack"]')) return;
 
-    const titleEl = el.querySelector('a.ytLockupMetadataViewModelTitle, a[href*="/watch"]');
+    // Title link first (class match); thumbnail link comes earlier in DOM
+    // and only carries the duration, so query it strictly before falling back
+    const titleEl = el.querySelector('a.ytLockupMetadataViewModelTitle') || el.querySelector('a[href*="/watch"]');
     const videoTitle = titleEl ? titleEl.textContent.trim() : '';
     const titleHref = titleEl ? (titleEl.getAttribute('href') || '') : '';
     const vidMatch = titleHref.match(/[?&]v=([^&]+)/);
@@ -1533,7 +1535,7 @@ async function batchRemoveHistoryDriver(targets) {
     const rows = document.querySelectorAll('yt-lockup-view-model');
     for (const el of rows) {
       if (!visible(el)) continue;
-      const titleEl = el.querySelector('a.ytLockupMetadataViewModelTitle, a[href*="/watch"]');
+      const titleEl = el.querySelector('a.ytLockupMetadataViewModelTitle') || el.querySelector('a[href*="/watch"]');
       if (!titleEl) continue;
       const href = titleEl.getAttribute('href') || '';
       if (t.videoId && href.includes('v=' + t.videoId)) return el;
@@ -1558,12 +1560,16 @@ async function batchRemoveHistoryDriver(targets) {
     if (!menuBtn) return { ok: false, reason: 'menu button not found' };
     menuBtn.click();
 
-    // The dropdown uses ytd-menu-service-item-renderer (sidebar nav does not),
-    // so scoping to it avoids matching the page's left-nav entries.
+    // New lockup menu items are yt-list-item-view-model (title span
+    // .ytListItemViewModelTitle); older menus use ytd-menu-service-item-renderer.
+    // Match the title text, then click its clickable container.
     const item = await pollFor(() => {
-      const menuItems = document.querySelectorAll('ytd-menu-service-item-renderer');
-      for (const mi of menuItems) {
-        if (visible(mi) && mi.textContent.trim().toLowerCase() === 'remove from watch history') return mi;
+      const titles = document.querySelectorAll(
+        '.ytListItemViewModelTitle, yt-list-item-view-model, ytd-menu-service-item-renderer, tp-yt-paper-item, yt-formatted-string');
+      for (const el of titles) {
+        if (visible(el) && el.textContent.trim().toLowerCase() === 'remove from watch history') {
+          return el.closest('yt-list-item-view-model, ytd-menu-service-item-renderer, tp-yt-paper-item, [role="menuitem"]') || el;
+        }
       }
       return null;
     }, 4000);
