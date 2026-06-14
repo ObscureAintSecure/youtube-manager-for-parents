@@ -2,8 +2,6 @@
 
 A Chrome extension to help parents manage their children's YouTube experience. Bulk unsubscribe from gaming channels and block them from recommendations.
 
-(Formerly "YouTube Kids Manager".)
-
 ## Features
 
 ### Subscriptions Mode
