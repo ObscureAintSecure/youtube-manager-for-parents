@@ -30,7 +30,7 @@ function initElements() {
   elements.tabRecommendations = document.getElementById('tab-recommendations');
   elements.tabHistory = document.getElementById('tab-history');
   elements.tabDiscover = document.getElementById('tab-discover');
-  elements.tabLists = document.getElementById('tab-lists');
+  elements.footerLists = document.getElementById('footer-lists');
   elements.subscriptionsMode = document.getElementById('subscriptions-mode');
   elements.recommendationsMode = document.getElementById('recommendations-mode');
   elements.historyMode = document.getElementById('history-mode');
@@ -156,7 +156,7 @@ function setupEventListeners() {
   elements.tabRecommendations.addEventListener('click', () => switchMode('recommendations'));
   elements.tabHistory.addEventListener('click', () => switchMode('history'));
   elements.tabDiscover.addEventListener('click', () => switchMode('discover'));
-  elements.tabLists.addEventListener('click', () => switchMode('lists'));
+  elements.footerLists.addEventListener('click', (e) => { e.preventDefault(); switchMode('lists'); });
 
   // Discover (For Kids) mode
   elements.btnSelectAllDiscover.addEventListener('click', selectAllDiscover);
@@ -247,7 +247,7 @@ function switchMode(mode) {
   elements.tabSubscriptions.classList.toggle('active', mode === 'subscriptions');
   elements.tabRecommendations.classList.toggle('active', mode === 'recommendations');
   elements.tabHistory.classList.toggle('active', mode === 'history');
-  elements.tabLists.classList.toggle('active', mode === 'lists');
+  elements.tabDiscover.classList.toggle('active', mode === 'discover');
 
   // Show/hide mode sections
   elements.subscriptionsMode.classList.toggle('hidden', mode !== 'subscriptions');
