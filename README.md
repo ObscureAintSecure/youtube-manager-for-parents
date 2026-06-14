@@ -6,9 +6,11 @@ A Chrome extension that helps parents clean up a child's YouTube account in bulk
 
 ## Screenshots
 
-| Clean Up Recommendations | Clean Up Subscriptions | For Kids |
-|---|---|---|
-| ![Clean Up Recommendations](store-assets/screenshot-recommendations.jpg) | ![Clean Up Subscriptions](store-assets/screenshot-subscriptions.jpg) | ![For Kids](store-assets/screenshot-forkids.jpg) |
+| Clean Up Recommendations | Clean Up Subscriptions |
+|---|---|
+| ![Clean Up Recommendations](store-assets/screenshot-recommendations.jpg) | ![Clean Up Subscriptions](store-assets/screenshot-subscriptions.jpg) |
+| **Clean Up History** | **For Kids** |
+| ![Clean Up History](store-assets/screenshot-history.jpg) | ![For Kids](store-assets/screenshot-forkids.jpg) |
 
 ## What it does
 
