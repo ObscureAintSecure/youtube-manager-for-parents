@@ -83,11 +83,14 @@
           <!-- Channels will be populated here -->
         </div>
         <button id="btn-suggest-subs" class="btn btn-secondary btn-large btn-twoline" style="margin-top: 10px;" disabled>
-          <span>💡 Suggest Selected for Shared Lists</span><span>(0 new)</span>
+          <span>🚫 Suggest Selected for Shared Block Lists</span><span>(0 new)</span>
+        </button>
+        <button id="btn-suggest-subs-good" class="btn btn-secondary btn-large btn-twoline" style="margin-top: 8px;" disabled>
+          <span>🌟 Suggest Selected as Good Channels for Kids</span><span>(0 new)</span>
         </button>
         <p class="help-text">
-          Suggests the channels you've checked above for the shared Gaming/Misc block lists
-          that all users of this extension receive. Opens a GitHub issue for the developer to approve.
+          Block-list suggestions add channels to the shared Gaming/Misc lists. Good-channel
+          suggestions add to the recommended-for-kids list. Both open a GitHub issue for the developer to approve.
         </p>
       </section>
 
@@ -225,11 +228,13 @@
         <p class="help-text">
           Subscribing opens each channel in a tab and follows it. Keep this popup open until it finishes.
         </p>
-        <button id="btn-suggest-discover" class="btn btn-secondary btn-large btn-twoline" style="margin-top: 8px;" disabled>
-          <span>💡 Suggest a Good Channel for This List</span><span>(0 selected)</span>
-        </button>
+        <div class="stats-row" style="margin-top: 8px;">
+          <span>🌟 Recommended list</span>
+          <a id="link-view-recommended" href="#" target="_blank" rel="noopener">View on GitHub →</a>
+        </div>
         <p class="help-text">
-          Know a great kids channel? Select it above and suggest it for the shared list (developer approves).
+          Know a great kids channel? Open the Subscriptions tab, select it, and use
+          "Suggest Selected as Good Channels for Kids".
         </p>
       </section>
     </div>

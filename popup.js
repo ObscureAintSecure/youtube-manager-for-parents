@@ -44,7 +44,7 @@ function initElements() {
   elements.discoverSelectedCount = document.getElementById('discover-selected-count');
   elements.discoverList = document.getElementById('discover-list');
   elements.btnSubscribeDiscover = document.getElementById('btn-subscribe-discover');
-  elements.btnSuggestDiscover = document.getElementById('btn-suggest-discover');
+  elements.linkViewRecommended = document.getElementById('link-view-recommended');
 
   // Lists mode
   elements.linkViewGaming = document.getElementById('link-view-gaming');
@@ -70,6 +70,7 @@ function initElements() {
   elements.bottomNInput = document.getElementById('bottom-n-input');
   elements.btnSelectBottom = document.getElementById('btn-select-bottom');
   elements.btnSuggestSubs = document.getElementById('btn-suggest-subs');
+  elements.btnSuggestSubsGood = document.getElementById('btn-suggest-subs-good');
   elements.btnSuggestVideos = document.getElementById('btn-suggest-videos');
   elements.totalCount = document.getElementById('total-count');
   elements.selectedCount = document.getElementById('selected-count');
@@ -161,13 +162,6 @@ function setupEventListeners() {
   elements.btnSelectAllDiscover.addEventListener('click', selectAllDiscover);
   elements.btnSelectNoneDiscover.addEventListener('click', selectNoneDiscover);
   elements.btnSubscribeDiscover.addEventListener('click', startSubscribeDiscover);
-  elements.btnSuggestDiscover.addEventListener('click', () => {
-    const picked = Array.from(selectedDiscover)
-      .map(i => recommendedHandles[i])
-      .filter(Boolean)
-      .map(h => ({ name: h, handle: h }));
-    openSuggestionIssue(picked, 'recommended');
-  });
 
   // Lists mode
   elements.btnRefreshLists.addEventListener('click', () => refreshListsFromGitHub(true));
@@ -186,9 +180,16 @@ function setupEventListeners() {
   elements.btnSuggestSubs.addEventListener('click', () => {
     const picked = Array.from(selectedChannels)
       .map(id => channels.find(c => c.id === id))
-      .filter(c => c && !c.isBlocked) // skip channels already on the lists
+      .filter(c => c && !c.isBlocked) // skip channels already on the block lists
       .map(c => ({ name: c.name, handle: c.handle }));
-    openSuggestionIssue(picked);
+    openSuggestionIssue(picked, 'gaming');
+  });
+  elements.btnSuggestSubsGood.addEventListener('click', () => {
+    const picked = Array.from(selectedChannels)
+      .map(id => channels.find(c => c.id === id))
+      .filter(c => c && !isOnRecommended(c)) // skip channels already recommended
+      .map(c => ({ name: c.name, handle: c.handle }));
+    openSuggestionIssue(picked, 'recommended');
   });
   elements.btnSuggestVideos.addEventListener('click', () => {
     const picked = Array.from(selectedVideos)
@@ -444,6 +445,16 @@ function isBlockedChannel(channel) {
   };
 }
 
+// True if a channel is already on the recommended-for-kids list (by name or handle)
+function isOnRecommended(channel) {
+  const nameLower = (channel.name || '').toLowerCase();
+  const handleLower = (channel.handle || '').toLowerCase();
+  return recommendedHandles.some(h => {
+    const hl = h.toLowerCase();
+    return hl === nameLower || hl === handleLower;
+  });
+}
+
 // ============================================
 // SUBSCRIPTIONS MODE
 // ============================================
@@ -638,8 +649,12 @@ function updateChannelCounts() {
 
   // Only channels not already on the lists are worth suggesting
   const suggestableSubs = channels.filter(ch => selectedChannels.has(ch.id) && !ch.isBlocked).length;
-  elements.btnSuggestSubs.innerHTML = `<span>💡 Suggest Selected for Shared Lists</span><span>(${suggestableSubs} new)</span>`;
+  elements.btnSuggestSubs.innerHTML = `<span>🚫 Suggest Selected for Shared Block Lists</span><span>(${suggestableSubs} new)</span>`;
   elements.btnSuggestSubs.disabled = suggestableSubs === 0;
+
+  const suggestableGood = channels.filter(ch => selectedChannels.has(ch.id) && !isOnRecommended(ch)).length;
+  elements.btnSuggestSubsGood.innerHTML = `<span>🌟 Suggest Selected as Good Channels for Kids</span><span>(${suggestableGood} new)</span>`;
+  elements.btnSuggestSubsGood.disabled = suggestableGood === 0;
 }
 
 function filterBySearch() {
@@ -1669,6 +1684,8 @@ async function batchRemoveHistoryDriver(targets) {
 // ============================================
 function renderDiscover() {
   elements.discoverList.innerHTML = '';
+  elements.linkViewRecommended.href =
+    'https://github.com/ObscureAintSecure/youtube-kids-manager/blob/main/lists/recommended-channels.txt';
 
   recommendedHandles.forEach((handle, index) => {
     const div = document.createElement('div');
@@ -1711,10 +1728,6 @@ function updateDiscoverCounts() {
 
   elements.btnSubscribeDiscover.textContent = `➕ Subscribe to Selected (${selectedDiscover.size})`;
   elements.btnSubscribeDiscover.disabled = selectedDiscover.size === 0;
-
-  elements.btnSuggestDiscover.innerHTML =
-    `<span>💡 Suggest a Good Channel for This List</span><span>(${selectedDiscover.size} selected)</span>`;
-  elements.btnSuggestDiscover.disabled = selectedDiscover.size === 0;
 }
 
 function selectAllDiscover() {
