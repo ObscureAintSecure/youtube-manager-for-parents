@@ -1312,7 +1312,7 @@ async function scanHistoryVideos(gamingList, miscList) {
   for (let i = 0; i < 10 && stableRounds < 2; i++) {
     window.scrollTo(0, document.documentElement.scrollHeight);
     await sleep(900);
-    const count = document.querySelectorAll('ytd-video-renderer').length;
+    const count = document.querySelectorAll('yt-lockup-view-model').length;
     if (count >= 400) break;
     if (count === lastCount) {
       stableRounds++;
@@ -1323,33 +1323,31 @@ async function scanHistoryVideos(gamingList, miscList) {
   }
   window.scrollTo(0, 0);
 
-  const items = document.querySelectorAll('ytd-video-renderer');
+  const items = document.querySelectorAll('yt-lockup-view-model');
   const videos = [];
   let id = 0;
 
   items.forEach(el => {
-    const titleEl = el.querySelector('#video-title, a#video-title-link');
+    // Skip playlist/mix collections
+    if (el.querySelector('[class*="CollectionStack"]')) return;
+
+    const titleEl = el.querySelector('a.ytLockupMetadataViewModelTitle, a[href*="/watch"]');
     const videoTitle = titleEl ? titleEl.textContent.trim() : '';
     const titleHref = titleEl ? (titleEl.getAttribute('href') || '') : '';
     const vidMatch = titleHref.match(/[?&]v=([^&]+)/);
     const videoId = vidMatch ? vidMatch[1] : '';
 
-    // Channel link (has /@handle)
+    // Channel is plain text in the metadata row: "Channel • 253K views"
     let channelName = '';
-    let channelHandle = '';
-    const chLink = el.querySelector('ytd-channel-name a, #channel-name a, a[href*="/@"]');
-    if (chLink) {
-      channelName = chLink.textContent.trim();
-      const hm = (chLink.getAttribute('href') || '').match(/@([^\/\?]+)/);
-      if (hm) channelHandle = hm[1];
-    }
+    const metaRow = el.querySelector('.yt-content-metadata-view-model-wiz__metadata-row, yt-content-metadata-view-model');
+    if (metaRow) channelName = metaRow.textContent.split('•')[0].trim();
 
     if (!videoTitle && !channelName) return;
 
+    // History rows expose channel name only (no @handle), so match by name
     const nameLower = channelName.toLowerCase();
-    const handleLower = channelHandle.toLowerCase();
-    const isGaming = gamingList.some(gc => nameLower === gc || handleLower === gc);
-    const isMisc = miscList.some(mc => nameLower === mc || handleLower === mc);
+    const isGaming = gamingList.some(gc => nameLower === gc);
+    const isMisc = miscList.some(mc => nameLower === mc);
 
     const thumbEl = el.querySelector('img');
     videos.push({
@@ -1357,7 +1355,6 @@ async function scanHistoryVideos(gamingList, miscList) {
       videoId,
       videoTitle,
       channelName,
-      channelHandle,
       thumbnail: thumbEl ? thumbEl.src : '',
       isGaming,
       isMisc,
@@ -1533,10 +1530,10 @@ async function batchRemoveHistoryDriver(targets) {
 
   // Find the history row for a target by video id (preferred) or exact title
   function findRow(t) {
-    const rows = document.querySelectorAll('ytd-video-renderer');
+    const rows = document.querySelectorAll('yt-lockup-view-model');
     for (const el of rows) {
       if (!visible(el)) continue;
-      const titleEl = el.querySelector('#video-title, a#video-title-link');
+      const titleEl = el.querySelector('a.ytLockupMetadataViewModelTitle, a[href*="/watch"]');
       if (!titleEl) continue;
       const href = titleEl.getAttribute('href') || '';
       if (t.videoId && href.includes('v=' + t.videoId)) return el;
@@ -1546,34 +1543,32 @@ async function batchRemoveHistoryDriver(targets) {
   }
 
   async function removeOne(t) {
+    // Close any leftover menu from the previous iteration
+    document.body.click();
+    await sleep(150);
+
     const row = findRow(t);
     if (!row) return { ok: false, reason: 'video not found (may already be removed)' };
     row.scrollIntoView({ behavior: 'instant', block: 'center' });
+    await sleep(150);
 
-    // Primary path: direct "Remove from watch history" button on the row
-    let removeBtn = [...row.querySelectorAll('button')]
-      .find(b => visible(b) && (b.getAttribute('aria-label') || '').toLowerCase().startsWith('remove from watch history'));
+    // History rows have no direct remove button - use More actions menu
+    const menuBtn = row.querySelector('button[aria-label="More actions"]') ||
+                    row.querySelector('button[aria-label="Action menu"]');
+    if (!menuBtn) return { ok: false, reason: 'menu button not found' };
+    menuBtn.click();
 
-    if (removeBtn) {
-      removeBtn.click();
-    } else {
-      // Fallback: 3-dot action menu -> "Remove from watch history"
-      const menuBtn = row.querySelector('button[aria-label="Action menu"]') ||
-                      row.querySelector('ytd-menu-renderer button') ||
-                      row.querySelector('button[aria-label="More actions"]');
-      if (!menuBtn) return { ok: false, reason: 'no remove or menu button found' };
-      menuBtn.click();
-
-      const item = await pollFor(() => {
-        const menuItems = document.querySelectorAll('ytd-menu-service-item-renderer, tp-yt-paper-item, [role="menuitem"]');
-        for (const mi of menuItems) {
-          if (visible(mi) && mi.textContent.toLowerCase().includes('remove from watch history')) return mi;
-        }
-        return null;
-      }, 4000);
-      if (!item) { document.body.click(); return { ok: false, reason: '"Remove from watch history" not in menu' }; }
-      item.click();
-    }
+    // The dropdown uses ytd-menu-service-item-renderer (sidebar nav does not),
+    // so scoping to it avoids matching the page's left-nav entries.
+    const item = await pollFor(() => {
+      const menuItems = document.querySelectorAll('ytd-menu-service-item-renderer');
+      for (const mi of menuItems) {
+        if (visible(mi) && mi.textContent.trim().toLowerCase() === 'remove from watch history') return mi;
+      }
+      return null;
+    }, 4000);
+    if (!item) { document.body.click(); return { ok: false, reason: '"Remove from watch history" not in menu' }; }
+    item.click();
 
     // Verify: the row is gone from the DOM
     const gone = await pollFor(() => (findRow(t) ? null : true), 4000);
