@@ -1884,30 +1884,36 @@ async function clickSubscribeOnChannel() {
     return null;
   }
 
-  // Wait for the subscribe button area to render
-  const container = await pollFor(() => document.querySelector('ytd-subscribe-button-renderer'));
-  if (!container) return { ok: false, reason: 'subscribe button not found' };
+  // The subscribe button lives in the new yt-subscribe-button-view-model
+  // (older pages used ytd-subscribe-button-renderer). Match the button by
+  // its aria-label / text rather than the container.
+  const findBtn = () => {
+    const scope = document.querySelector('yt-subscribe-button-view-model, ytd-subscribe-button-renderer') || document;
+    let b = [...scope.querySelectorAll('button')].find(x => {
+      const a = (x.getAttribute('aria-label') || '').toLowerCase();
+      return a.startsWith('subscribe to') || a.startsWith('unsubscribe from');
+    });
+    if (b) return b;
+    return [...scope.querySelectorAll('button')].find(x => {
+      const t = (x.textContent || '').trim().toLowerCase();
+      return t === 'subscribe' || t === 'subscribed';
+    }) || null;
+  };
 
-  const btn = container.querySelector('button');
-  const label = (btn?.getAttribute('aria-label') || '').toLowerCase();
-  const text = (btn?.textContent || '').trim().toLowerCase();
+  const isSubscribed = (b) => {
+    const a = (b?.getAttribute('aria-label') || '').toLowerCase();
+    const t = (b?.textContent || '').trim().toLowerCase();
+    return a.startsWith('unsubscribe from') || t === 'subscribed';
+  };
 
-  // Already subscribed?
-  if (label.startsWith('unsubscribe') || text === 'subscribed') {
-    return { ok: true, reason: 'already subscribed' };
-  }
+  const btn = await pollFor(findBtn);
+  if (!btn) return { ok: false, reason: 'subscribe button not found' };
 
-  if (!btn) return { ok: false, reason: 'subscribe button missing' };
+  if (isSubscribed(btn)) return { ok: true, reason: 'already subscribed' };
+
   btn.click();
 
-  // Verify it flipped to subscribed
-  const ok = await pollFor(() => {
-    const b = container.querySelector('button');
-    const l = (b?.getAttribute('aria-label') || '').toLowerCase();
-    const t = (b?.textContent || '').trim().toLowerCase();
-    return (l.startsWith('unsubscribe') || t === 'subscribed') ? true : null;
-  }, 5000);
-
+  const ok = await pollFor(() => isSubscribed(findBtn()) ? true : null, 5000);
   return ok ? { ok: true, reason: '' } : { ok: false, reason: 'clicked but not confirmed' };
 }
 
