@@ -34,7 +34,7 @@ A Chrome extension to help parents manage their children's YouTube experience. B
 2. Open Chrome and go to `chrome://extensions/`
 3. Enable **Developer mode** (toggle in top right)
 4. Click **Load unpacked**
-5. Select the `youtube-kids-manager` folder
+5. Select the `youtube-manager-for-parents` folder
 6. The extension icon should appear in your toolbar
 
 ## Usage
@@ -106,7 +106,7 @@ You can host the `gaming-channels.txt` file on GitHub and modify the extension t
 ## Project Structure
 
 ```
-youtube-kids-manager/
+youtube-manager-for-parents/
 ├── manifest.json          # Chrome extension manifest
 ├── popup.html             # Extension popup UI
 ├── popup.css              # Styles

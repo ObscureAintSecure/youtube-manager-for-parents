@@ -317,7 +317,7 @@ async function fetchBundledList(file) {
 // GitHub is the single source of truth for the lists. The extension pulls
 // the latest copies on every popup open; storage holds a cache for when
 // GitHub is unreachable; the bundled .txt files are the last-resort fallback.
-const GITHUB_LISTS_BASE = 'https://raw.githubusercontent.com/ObscureAintSecure/youtube-kids-manager/main/lists/';
+const GITHUB_LISTS_BASE = 'https://raw.githubusercontent.com/ObscureAintSecure/youtube-manager-for-parents/main/lists/';
 
 async function loadChannelLists() {
   const { ykm_lists } = await chrome.storage.local.get('ykm_lists');
@@ -389,7 +389,7 @@ async function refreshListsFromGitHub(manual = false) {
 
 function fillListsView(errorNote) {
   updateListCounts();
-  const blobBase = 'https://github.com/ObscureAintSecure/youtube-kids-manager/blob/main/lists/';
+  const blobBase = 'https://github.com/ObscureAintSecure/youtube-manager-for-parents/blob/main/lists/';
   elements.linkViewGaming.href = blobBase + 'gaming-channels.txt';
   elements.linkViewMisc.href = blobBase + 'misc-channels.txt';
   elements.linkViewRecLists.href = blobBase + 'recommended-channels.txt';
@@ -1700,7 +1700,7 @@ async function batchRemoveHistoryDriver(targets) {
 function renderDiscover() {
   elements.discoverList.innerHTML = '';
   elements.linkViewRecommended.href =
-    'https://github.com/ObscureAintSecure/youtube-kids-manager/blob/main/lists/recommended-channels.txt';
+    'https://github.com/ObscureAintSecure/youtube-manager-for-parents/blob/main/lists/recommended-channels.txt';
 
   recommendedHandles.forEach((handle, index) => {
     const div = document.createElement('div');
@@ -1920,7 +1920,7 @@ async function clickSubscribeOnChannel() {
 // ============================================
 // CHANNEL SUGGESTIONS (GitHub issue + Action pipeline)
 // ============================================
-const GITHUB_REPO_URL = 'https://github.com/ObscureAintSecure/youtube-kids-manager';
+const GITHUB_REPO_URL = 'https://github.com/ObscureAintSecure/youtube-manager-for-parents';
 const MAX_SUGGESTIONS_PER_ISSUE = 30;
 
 // Opens a prefilled GitHub issue suggesting the selected channels for the
