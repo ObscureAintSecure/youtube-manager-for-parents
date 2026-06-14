@@ -345,10 +345,13 @@ async function refreshListsFromGitHub(manual = false) {
   if (manual) setStatus('Fetching lists from GitHub...', 'info');
 
   try {
+    // raw.githubusercontent serves through a CDN that ignores cache:no-cache,
+    // so add a unique query param to force a fresh copy on each refresh.
+    const bust = `?_=${Date.now()}`;
     const [gamingRes, miscRes, recRes] = await Promise.all([
-      fetch(GITHUB_LISTS_BASE + 'gaming-channels.txt', { cache: 'no-cache' }),
-      fetch(GITHUB_LISTS_BASE + 'misc-channels.txt', { cache: 'no-cache' }),
-      fetch(GITHUB_LISTS_BASE + 'recommended-channels.txt', { cache: 'no-cache' })
+      fetch(GITHUB_LISTS_BASE + 'gaming-channels.txt' + bust, { cache: 'no-cache' }),
+      fetch(GITHUB_LISTS_BASE + 'misc-channels.txt' + bust, { cache: 'no-cache' }),
+      fetch(GITHUB_LISTS_BASE + 'recommended-channels.txt' + bust, { cache: 'no-cache' })
     ]);
     if (!gamingRes.ok || !miscRes.ok) {
       throw new Error(`GitHub returned ${gamingRes.ok ? miscRes.status : gamingRes.status}`);
@@ -369,7 +372,7 @@ async function refreshListsFromGitHub(manual = false) {
     fillListsView();
     if (currentMode === 'discover') renderDiscover();
     if (manual) {
-      setStatus(`Synced: ${gamingChannelsList.length} gaming, ${miscChannelsList.length} misc entries`, 'success');
+      setStatus(`Synced: ${gamingChannelsList.length} gaming, ${miscChannelsList.length} misc, ${recommendedHandles.length} recommended`, 'success');
     }
   } catch (error) {
     fillListsView(`GitHub unreachable (${error.message})`);
