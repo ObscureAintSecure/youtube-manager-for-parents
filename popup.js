@@ -33,8 +33,8 @@ function initElements() {
   elements.listsMode = document.getElementById('lists-mode');
 
   // Lists mode
-  elements.listGaming = document.getElementById('list-gaming');
-  elements.listMisc = document.getElementById('list-misc');
+  elements.linkViewGaming = document.getElementById('link-view-gaming');
+  elements.linkViewMisc = document.getElementById('link-view-misc');
   elements.gamingListCount = document.getElementById('gaming-list-count');
   elements.miscListCount = document.getElementById('misc-list-count');
   elements.btnRefreshLists = document.getElementById('btn-refresh-lists');
@@ -325,22 +325,23 @@ async function refreshListsFromGitHub(manual = false) {
 }
 
 function fillListsView(errorNote) {
-  elements.listGaming.value = gamingListText;
-  elements.listMisc.value = miscListText;
   updateListCounts();
+  const blobBase = 'https://github.com/ObscureAintSecure/youtube-kids-manager/blob/main/lists/';
+  elements.linkViewGaming.href = blobBase + 'gaming-channels.txt';
+  elements.linkViewMisc.href = blobBase + 'misc-channels.txt';
   if (errorNote) {
     const cached = listsFetchedAt ? `cached copy from ${new Date(listsFetchedAt).toLocaleString()}` : 'bundled copy';
-    elements.listsSyncStatus.textContent = `${errorNote} — showing ${cached}`;
+    elements.listsSyncStatus.textContent = `${errorNote} — using ${cached}`;
   } else if (listsFetchedAt) {
     elements.listsSyncStatus.textContent = `Synced from GitHub: ${new Date(listsFetchedAt).toLocaleString()}`;
   } else {
-    elements.listsSyncStatus.textContent = 'Not synced yet — showing bundled lists';
+    elements.listsSyncStatus.textContent = 'Not synced yet — using bundled lists';
   }
 }
 
 function updateListCounts() {
-  elements.gamingListCount.textContent = `(${parseList(elements.listGaming.value).length} entries)`;
-  elements.miscListCount.textContent = `(${parseList(elements.listMisc.value).length} entries)`;
+  elements.gamingListCount.textContent = `(${gamingChannelsList.length} entries)`;
+  elements.miscListCount.textContent = `(${miscChannelsList.length} entries)`;
 }
 
 // Re-apply list matching to whatever is already loaded in either mode

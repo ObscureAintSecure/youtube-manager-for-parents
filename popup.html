@@ -210,13 +210,16 @@
         </p>
         <p class="help-text" id="lists-sync-status">Not synced yet</p>
 
-        <h2>Gaming Channels <span id="gaming-list-count" class="list-count"></span></h2>
-        <textarea id="list-gaming" class="list-editor" rows="10" spellcheck="false" readonly></textarea>
+        <div class="stats-row" style="border-top: none; padding-top: 0;">
+          <span>🎮 Gaming <span id="gaming-list-count" class="list-count"></span></span>
+          <a id="link-view-gaming" href="#" target="_blank" rel="noopener">View on GitHub →</a>
+        </div>
+        <div class="stats-row">
+          <span>🚫 Misc <span id="misc-list-count" class="list-count"></span></span>
+          <a id="link-view-misc" href="#" target="_blank" rel="noopener">View on GitHub →</a>
+        </div>
 
-        <h2>Misc Blocked Channels <span id="misc-list-count" class="list-count"></span></h2>
-        <textarea id="list-misc" class="list-editor" rows="6" spellcheck="false" readonly></textarea>
-
-        <button id="btn-refresh-lists" class="btn btn-primary btn-large">🔄 Refresh from GitHub</button>
+        <button id="btn-refresh-lists" class="btn btn-primary btn-large" style="margin-top: 12px;">🔄 Refresh from GitHub</button>
         <p class="help-text">
           Think a channel is missing? Select it in the Recommendations or Subscriptions tab
           and click "Suggest Selected for Shared Lists". On a list wrongly? Use the Feedback link below.
