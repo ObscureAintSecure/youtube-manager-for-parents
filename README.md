@@ -4,6 +4,12 @@ A Chrome extension that helps parents clean up a child's YouTube account in bulk
 
 (Formerly "YouTube Kids Manager".)
 
+## Screenshots
+
+| Clean Up Recommendations | Clean Up Subscriptions | For Kids |
+|---|---|---|
+| ![Clean Up Recommendations](store-assets/screenshot-recommendations.jpg) | ![Clean Up Subscriptions](store-assets/screenshot-subscriptions.jpg) | ![For Kids](store-assets/screenshot-forkids.jpg) |
+
 ## What it does
 
 The popup has four tabs:
