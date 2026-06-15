@@ -2,8 +2,6 @@
 
 A Chrome extension that helps parents clean up a child's YouTube account in bulk and point it toward better content. Prune subscriptions, recommendations, and watch history, and subscribe to a shared list of good channels.
 
-(Formerly "YouTube Kids Manager".)
-
 ## Screenshots
 
 | Clean Up Recommendations | Clean Up Subscriptions |
